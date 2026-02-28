@@ -207,6 +207,20 @@ set -l output (autoreload nonexistent 2>&1)
 @test "key: my-plugin.fish -> my_plugin_fish" (__autoreload_key /path/my-plugin.fish) = my_plugin_fish
 @test "key: a.b.fish -> a_b_fish" (__autoreload_key /path/a.b.fish) = a_b_fish
 
+# --- Test 20b: __autoreload_basename ---
+
+@test "basename: extracts filename" (__autoreload_basename /some/path/foo.fish) = foo.fish
+@test "basename: bare filename unchanged" (__autoreload_basename bar.fish) = bar.fish
+@test "basename: multiple args" (count (__autoreload_basename /a/one.fish /b/two.fish)) = 2
+
+# --- Test 20c: __autoreload_is_excluded ---
+
+set -g autoreload_exclude skip.fish
+@test "is_excluded: matching file returns 0" (__autoreload_is_excluded /path/skip.fish; and echo yes) = yes
+@test "is_excluded: non-matching file returns 1" (not __autoreload_is_excluded /path/keep.fish; and echo yes) = yes
+set -e autoreload_exclude
+@test "is_excluded: unset exclude returns 1" (not __autoreload_is_excluded /path/any.fish; and echo yes) = yes
+
 # --- Test 21: cleanup disabled (default) — current behavior unchanged ---
 
 __autoreload_snapshot
