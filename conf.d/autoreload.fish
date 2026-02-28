@@ -288,8 +288,8 @@ function __autoreload_check --on-event fish_prompt
             set -l pre_paths
             if __autoreload_cleanup_enabled
                 set pre_vars (set --global --names)
-                set pre_funcs (functions --names)
-                set pre_abbrs (abbr --list | string replace -r '\s.*' '')
+                set pre_funcs (functions --all --names)
+                set pre_abbrs (abbr --list)
                 set pre_paths $PATH
             end
 
@@ -299,8 +299,8 @@ function __autoreload_check --on-event fish_prompt
                 # compute diff and save tracking data
                 if __autoreload_cleanup_enabled
                     set -l post_vars (set --global --names)
-                    set -l post_funcs (functions --names)
-                    set -l post_abbrs (abbr --list | string replace -r '\s.*' '')
+                    set -l post_funcs (functions --all --names)
+                    set -l post_abbrs (abbr --list)
                     set -l post_paths $PATH
 
                     # track new variables (exclude __autoreload_* to avoid self-pollution)
