@@ -296,20 +296,19 @@ __autoreload_snapshot
 
 # --- Test 27: teardown hook called on re-source ---
 
+# Pre-create marker so it's not tracked as "added" by cleanup
+set -g __test_teardown_marker 0
 __autoreload_snapshot
-echo 'set -g __test_teardown_marker 0
-function __teardown_hook_teardown
+echo 'function __teardown_hook_teardown
     set -g __test_teardown_marker called
 end' >$__test_conf_d/teardown_hook.fish
 set -l output (__autoreload_check)
 @test "teardown: marker initialized" "$__test_teardown_marker" = 0
-# trigger re-source
-echo "set -g __test_teardown_marker 0" >$__test_conf_d/teardown_hook.fish
+# trigger re-source — new content does NOT reset marker, so teardown's "called" value persists
+echo "# no marker reset" >$__test_conf_d/teardown_hook.fish
 command touch -t 201001010000 $__test_conf_d/teardown_hook.fish
 set -l output (__autoreload_check)
-@test "teardown: hook was called on re-source" "$__test_teardown_marker" = 0
-# verify the hook function was defined and would have been called
-# (we check the marker was reset to 0 by the new source, meaning teardown ran before source)
+@test "teardown: hook was called on re-source" "$__test_teardown_marker" = called
 command rm -f $__test_conf_d/teardown_hook.fish
 set -e __test_teardown_marker
 __autoreload_snapshot
