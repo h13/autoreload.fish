@@ -93,7 +93,7 @@ function __autoreload_check --on-event fish_prompt
 
     set -l sourced
     for file in $changed
-        if source $file 2>&1
+        if source $file 2>/dev/null
             set -a sourced $file
         else
             echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
