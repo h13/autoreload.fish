@@ -104,12 +104,14 @@ function __autoreload_check --on-event fish_prompt
         end
         set -l current (__autoreload_mtime $file)
         if test "$current" != "$__autoreload_mtimes[$i]"
+            __autoreload_debug "changed: "(string replace -r '.*/' '' $file)
             set -a changed $file
         end
     end
 
     # report deleted files
     if test (count $deleted) -gt 0
+        __autoreload_debug "deleted: "(string replace -r '.*/' '' $deleted)
         if not __autoreload_is_quiet
             set -l names (string replace -r '.*/' '' $deleted)
             echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
@@ -119,6 +121,7 @@ function __autoreload_check --on-event fish_prompt
     # detect config.fish creation
     set -l config_file $__fish_config_dir/config.fish
     if test -f $config_file; and not contains -- $config_file $__autoreload_files
+        __autoreload_debug "new: config.fish"
         set -a changed $config_file
     end
 
@@ -134,6 +137,7 @@ function __autoreload_check --on-event fish_prompt
             end
         end
         if not contains -- $file $__autoreload_files
+            __autoreload_debug "new: "(string replace -r '.*/' '' $file)
             set -a changed $file
         end
     end
