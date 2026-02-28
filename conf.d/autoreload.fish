@@ -287,16 +287,7 @@ function autoreload -a cmd -d "autoreload.fish utility command"
     end
 end
 
-function __autoreload_check --on-event fish_prompt
-    if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
-        return
-    end
-
-    __autoreload_debug "checking "(count $__autoreload_files)" files"
-
-    set -l changed
-    set -l deleted
-
+function __autoreload_detect_changes --no-scope-shadowing
     # check tracked files for changes or deletion
     for i in (seq (count $__autoreload_files))
         set -l file $__autoreload_files[$i]
@@ -308,25 +299,6 @@ function __autoreload_check --on-event fish_prompt
         if test "$current" != "$__autoreload_mtimes[$i]"
             __autoreload_debug "changed: "(__autoreload_basename $file)
             set -a changed $file
-        end
-    end
-
-    # handle deleted files: undo side effects and report
-    if test (count $deleted) -gt 0
-        __autoreload_debug "deleted: "(__autoreload_basename $deleted)
-        if __autoreload_cleanup_enabled
-            for file in $deleted
-                __autoreload_call_teardown $file
-                set -l key (__autoreload_key $file)
-                if contains -- $key $__autoreload_tracked_keys
-                    __autoreload_debug "undoing state for deleted $key"
-                    __autoreload_undo $key
-                end
-            end
-        end
-        if not __autoreload_is_quiet
-            set -l names (__autoreload_basename $deleted)
-            echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
         end
     end
 
@@ -351,27 +323,62 @@ function __autoreload_check --on-event fish_prompt
             set -a changed $file
         end
     end
+end
 
-    # nothing happened — skip snapshot
+function __autoreload_handle_deleted
+    set -l deleted $argv
+    __autoreload_debug "deleted: "(__autoreload_basename $deleted)
+    if __autoreload_cleanup_enabled
+        for file in $deleted
+            __autoreload_call_teardown $file
+            set -l key (__autoreload_key $file)
+            if contains -- $key $__autoreload_tracked_keys
+                __autoreload_debug "undoing state for deleted $key"
+                __autoreload_undo $key
+            end
+        end
+    end
+    if not __autoreload_is_quiet
+        set -l names (__autoreload_basename $deleted)
+        echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
+    end
+end
+
+function __autoreload_handle_changed
+    set -l changed $argv
+    set -l sourced
+    for file in $changed
+        if __autoreload_source_file $file
+            set -a sourced $file
+        end
+    end
+    if test (count $sourced) -gt 0; and not __autoreload_is_quiet
+        set -l names (__autoreload_basename $sourced)
+        echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
+    end
+end
+
+function __autoreload_check --on-event fish_prompt
+    if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
+        return
+    end
+
+    __autoreload_debug "checking "(count $__autoreload_files)" files"
+
+    set -l changed
+    set -l deleted
+    __autoreload_detect_changes
+
     if test (count $deleted) -eq 0; and test (count $changed) -eq 0
         return
     end
 
-    # source changed files
-    if test (count $changed) -gt 0
-        set -l sourced
-        for file in $changed
-            if __autoreload_source_file $file
-                set -a sourced $file
-            end
-        end
+    if test (count $deleted) -gt 0
+        __autoreload_handle_deleted $deleted
+    end
 
-        if test (count $sourced) -gt 0
-            if not __autoreload_is_quiet
-                set -l names (__autoreload_basename $sourced)
-                echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
-            end
-        end
+    if test (count $changed) -gt 0
+        __autoreload_handle_changed $changed
     end
 
     __autoreload_snapshot
