@@ -6,10 +6,19 @@ if not status is-interactive
 end
 
 set -g __autoreload_version 1.0.0
+set -g __autoreload_self (builtin realpath (status filename))
+if test -z "$__autoreload_self"
+    exit
+end
 
-function __autoreload_mtime -a file
-    command stat -c %Y $file 2>/dev/null
-    or /usr/bin/stat -f %m $file 2>/dev/null
+if command stat -c %Y /dev/null &>/dev/null
+    function __autoreload_mtime -a file
+        command stat -c %Y $file 2>/dev/null
+    end
+else
+    function __autoreload_mtime -a file
+        /usr/bin/stat -f %m $file 2>/dev/null
+    end
 end
 
 function __autoreload_snapshot
@@ -22,10 +31,9 @@ function __autoreload_snapshot
         set -a __autoreload_mtimes (__autoreload_mtime $config_file)
     end
 
-    set -l self (status filename)
     for file in $__fish_config_dir/conf.d/*.fish
         # exclude self to prevent recursive sourcing
-        if test (builtin realpath $file) = (builtin realpath $self)
+        if test (builtin realpath $file) = $__autoreload_self
             continue
         end
         set -a __autoreload_files $file
@@ -39,10 +47,9 @@ function __autoreload_check --on-event fish_prompt
     end
 
     set -l changed
-    set -l i 1
 
     # check tracked files for changes
-    while test $i -le (count $__autoreload_files)
+    for i in (seq (count $__autoreload_files))
         set -l file $__autoreload_files[$i]
         if test -f $file
             set -l current (__autoreload_mtime $file)
@@ -50,13 +57,11 @@ function __autoreload_check --on-event fish_prompt
                 set -a changed $file
             end
         end
-        set i (math $i + 1)
     end
 
     # detect new files in conf.d
-    set -l self (status filename)
     for file in $__fish_config_dir/conf.d/*.fish
-        if test (builtin realpath $file) = (builtin realpath $self)
+        if test (builtin realpath $file) = $__autoreload_self
             continue
         end
         if not contains -- $file $__autoreload_files
@@ -72,10 +77,7 @@ function __autoreload_check --on-event fish_prompt
         source $file
     end
 
-    set -l names
-    for file in $changed
-        set -a names (basename $file)
-    end
+    set -l names (string replace -r '.*/' '' $changed)
     echo "autoreload: sourced $names"
 
     __autoreload_snapshot
@@ -93,7 +95,9 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     functions -e __autoreload_snapshot
     functions -e __autoreload_check
     functions -e _autoreload_install
+    functions -e _autoreload_uninstall
     set -e __autoreload_version
+    set -e __autoreload_self
     set -e __autoreload_files
     set -e __autoreload_mtimes
     set -e autoreload_enabled
