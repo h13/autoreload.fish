@@ -3,7 +3,7 @@
 [![CI](https://github.com/h13/autoreload.fish/actions/workflows/ci.yml/badge.svg)](https://github.com/h13/autoreload.fish/actions/workflows/ci.yml)
 [![Fish Shell](https://img.shields.io/badge/fish-3.1%2B-blue?logo=gnubash&logoColor=white)](https://fishshell.com/)
 [![Fisher](https://img.shields.io/badge/fisher-plugin-007ec6?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHRleHQgeD0iMiIgeT0iMTMiIGZvbnQtc2l6ZT0iMTIiPvCfkKA8L3RleHQ+PC9zdmc+)](https://github.com/jorgebucaran/fisher)
-[![GitHub release](https://img.shields.io/github/v/release/h13/autoreload.fish?color=green&v=1.2.0)](https://github.com/h13/autoreload.fish/releases/latest)
+[![GitHub release](https://img.shields.io/github/v/release/h13/autoreload.fish?color=green)](https://github.com/h13/autoreload.fish/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)]()
 
