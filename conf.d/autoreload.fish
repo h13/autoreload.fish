@@ -111,6 +111,12 @@ function __autoreload_check --on-event fish_prompt
         end
     end
 
+    # detect config.fish creation
+    set -l config_file $__fish_config_dir/config.fish
+    if test -f $config_file; and not contains -- $config_file $__autoreload_files
+        set -a changed $config_file
+    end
+
     # detect new files in conf.d
     for file in $__fish_config_dir/conf.d/*.fish
         if test "$file" = "$__autoreload_self_glob"
