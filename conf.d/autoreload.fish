@@ -21,8 +21,12 @@ else
     end
 end
 
+function __autoreload_is_debug
+    set -q autoreload_debug; and test "$autoreload_debug" = 1
+end
+
 function __autoreload_debug -a msg
-    if set -q autoreload_debug; and test "$autoreload_debug" = 1
+    if __autoreload_is_debug
         echo "autoreload: [debug] $msg" >&2
     end
 end
@@ -224,10 +228,10 @@ function autoreload -a cmd -d "autoreload.fish utility command"
             if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
                 set -a flags disabled
             end
-            if set -q autoreload_quiet; and test "$autoreload_quiet" = 1
+            if __autoreload_is_quiet
                 set -a flags quiet
             end
-            if set -q autoreload_debug; and test "$autoreload_debug" = 1
+            if __autoreload_is_debug
                 set -a flags debug
             end
             if __autoreload_cleanup_enabled
