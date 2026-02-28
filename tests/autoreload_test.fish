@@ -42,9 +42,8 @@ __autoreload_snapshot
 
 # --- Test 3: file change detection ---
 
-# Touch the file with a future mtime to ensure change
-sleep 1
-touch $__test_conf_d/dummy.fish
+# Set mtime to a known different value to ensure change detection
+command touch -t 200101010000 $__test_conf_d/dummy.fish
 set -l output (__autoreload_check)
 @test "changed file is sourced" (string match -q '*sourced*dummy.fish*' -- $output; and echo yes) = yes
 
@@ -79,8 +78,7 @@ __autoreload_snapshot
 
 __autoreload_snapshot
 set -g autoreload_enabled 0
-sleep 1
-touch $__test_conf_d/dummy.fish
+command touch -t 200201010000 $__test_conf_d/dummy.fish
 set -l output (__autoreload_check)
 @test "disabled when autoreload_enabled=0" -z "$output"
 set -e autoreload_enabled
@@ -106,8 +104,7 @@ __autoreload_snapshot
 
 __autoreload_snapshot
 set -g autoreload_quiet 1
-sleep 1
-touch $__test_conf_d/dummy.fish
+command touch -t 200301010000 $__test_conf_d/dummy.fish
 set -l output (__autoreload_check)
 @test "quiet mode suppresses sourced message" -z "$output"
 set -e autoreload_quiet
@@ -165,9 +162,9 @@ __autoreload_snapshot
 echo "set -g __test_multi_a 1" >$__test_conf_d/multi_a.fish
 echo "set -g __test_multi_b 2" >$__test_conf_d/multi_b.fish
 __autoreload_snapshot
-sleep 1
 echo "set -g __test_multi_a 10" >$__test_conf_d/multi_a.fish
 echo "set -g __test_multi_b 20" >$__test_conf_d/multi_b.fish
+command touch -t 200401010000 $__test_conf_d/multi_a.fish $__test_conf_d/multi_b.fish
 set -l output (__autoreload_check)
 @test "multiple changed files: a is sourced" "$__test_multi_a" = 10
 @test "multiple changed files: b is sourced" "$__test_multi_b" = 20
