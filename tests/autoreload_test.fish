@@ -89,9 +89,9 @@ set -e autoreload_enabled
 
 __autoreload_snapshot
 set -l output (autoreload status)
-@test "autoreload status shows version" (string match -q '*v1.0.0*' -- $output; and echo yes) = yes
+@test "autoreload status shows version" (string match -q '*v1.1.0*' -- $output; and echo yes) = yes
 @test "autoreload status lists tracked files" (string match -q '*dummy.fish*' -- $output; and echo yes) = yes
-@test "autoreload version returns version" (autoreload version) = 1.0.0
+@test "autoreload version returns version" (autoreload version) = 1.1.0
 
 # --- Test 9: autoreload_exclude skips files ---
 
