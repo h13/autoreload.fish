@@ -10,162 +10,21 @@ mkdir -p $__test_conf_d
 # Create a dummy self file so the plugin can resolve its own path
 echo "# self" >$__test_conf_d/autoreload.fish
 
-# Override __fish_config_dir to point at our temp directory
+# Override __fish_config_dir and pre-set __autoreload_self before sourcing
 set -g __fish_config_dir $__test_dir
-
-# Source the plugin — need to trick the interactive check and self-path
-# We source only the function definitions, skipping the guards
-# by defining the functions directly
-
-# Platform-aware mtime
-if command stat -c %Y /dev/null &>/dev/null
-    function __autoreload_mtime -a file
-        command stat -c %Y $file 2>/dev/null | string trim
-    end
-else
-    function __autoreload_mtime -a file
-        /usr/bin/stat -f %m $file 2>/dev/null | string trim
-    end
-end
-
-function __autoreload_debug -a msg
-    if set -q autoreload_debug; and test "$autoreload_debug" = 1
-        echo "autoreload: [debug] $msg" >&2
-    end
-end
-
 set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
 
-function __autoreload_snapshot
-    set -g __autoreload_files
-    set -g __autoreload_mtimes
-    set -g __autoreload_self_glob ""
-
-    set -l config_file $__fish_config_dir/config.fish
-    if test -f $config_file
-        set -a __autoreload_files $config_file
-        set -a __autoreload_mtimes (__autoreload_mtime $config_file)
-    end
-
-    for file in $__fish_config_dir/conf.d/*.fish
-        set -l resolved (builtin realpath $file 2>/dev/null)
-        if test "$resolved" = "$__autoreload_self"
-            set __autoreload_self_glob $file
-            continue
-        end
-        if set -q autoreload_exclude
-            set -l basename (string replace -r '.*/' '' $file)
-            if contains -- $basename $autoreload_exclude
-                continue
-            end
-        end
-        set -a __autoreload_files $file
-        set -a __autoreload_mtimes (__autoreload_mtime $file)
-    end
-end
-
-function __autoreload_check
-    if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
-        return
-    end
-
-    __autoreload_debug "checking "(count $__autoreload_files)" files"
-
-    set -l changed
-    set -l deleted
-
-    for i in (seq (count $__autoreload_files))
-        set -l file $__autoreload_files[$i]
-        if not test -f $file
-            set -a deleted $file
-            continue
-        end
-        set -l current (__autoreload_mtime $file)
-        if test "$current" != "$__autoreload_mtimes[$i]"
-            set -a changed $file
-        end
-    end
-
-    if test (count $deleted) -gt 0
-        if not set -q autoreload_quiet; or test "$autoreload_quiet" != 1
-            set -l names (string replace -r '.*/' '' $deleted)
-            echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
-        end
-        __autoreload_snapshot
-    end
-
-    for file in $__fish_config_dir/conf.d/*.fish
-        if test "$file" = "$__autoreload_self_glob"
-            continue
-        end
-        if set -q autoreload_exclude
-            set -l basename (string replace -r '.*/' '' $file)
-            if contains -- $basename $autoreload_exclude
-                continue
-            end
-        end
-        if not contains -- $file $__autoreload_files
-            set -a changed $file
-        end
-    end
-
-    if test (count $changed) -eq 0
-        return
-    end
-
-    set -l sourced
-    for file in $changed
-        if source $file 2>/dev/null
-            set -a sourced $file
-        else
-            echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
-        end
-    end
-
-    if test (count $sourced) -gt 0
-        if not set -q autoreload_quiet; or test "$autoreload_quiet" != 1
-            set -l names (string replace -r '.*/' '' $sourced)
-            echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
-        end
-    end
-
-    __autoreload_snapshot
-end
-
-function autoreload -a cmd
-    switch "$cmd"
-        case status
-            echo "autoreload v$__autoreload_version"
-            echo "tracking "(count $__autoreload_files)" files:"
-            for file in $__autoreload_files
-                echo "  "(string replace -r '.*/' '' $file)
-            end
-        case version
-            echo $__autoreload_version
-        case '*'
-            echo "usage: autoreload <status|version>" >&2
-            return 1
-    end
-end
-
-function _autoreload_uninstall
-    functions -e __autoreload_mtime
-    functions -e __autoreload_debug
-    functions -e __autoreload_snapshot
-    functions -e autoreload
-    functions -e __autoreload_check
-    functions -e _autoreload_install
-    functions -e _autoreload_uninstall
-    set -e __autoreload_version
-    set -e __autoreload_self
-    set -e __autoreload_self_glob
-    set -e __autoreload_files
-    set -e __autoreload_mtimes
-    set -e autoreload_enabled
-    set -e autoreload_quiet
-    set -e autoreload_exclude
-    set -e autoreload_debug
-end
+# Source production code with test-incompatible parts neutralized:
+# - Disable interactive guard (tests run non-interactively)
+# - Preserve pre-set __autoreload_self instead of resolving from status filename
+# - Disable empty-self guard (we already set it)
+# - Remove --on-event so __autoreload_check can be called directly
+set -l plugin_file (builtin realpath (status dirname)/../conf.d/autoreload.fish)
+string replace 'if not status is-interactive' 'if false' <$plugin_file \
+    | string replace 'set -g __autoreload_self (builtin realpath (status filename))' '# __autoreload_self already set by test' \
+    | string replace 'if test -z "$__autoreload_self"' 'if false' \
+    | string replace -- '--on-event fish_prompt' '' \
+    | source
 
 # --- Test 1: __autoreload_mtime returns a timestamp ---
 
@@ -228,7 +87,6 @@ set -e autoreload_enabled
 
 # --- Test 8: autoreload status command ---
 
-set -g __autoreload_version 1.0.0
 __autoreload_snapshot
 set -l output (autoreload status)
 @test "autoreload status shows version" (string match -q '*v1.0.0*' -- $output; and echo yes) = yes
@@ -256,7 +114,6 @@ set -e autoreload_quiet
 
 # --- Test 11: _autoreload_uninstall cleans up ---
 
-set -g __autoreload_version 1.0.0
 _autoreload_uninstall
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
 @test "uninstall removes __autoreload_snapshot" (functions -q __autoreload_snapshot; or echo gone) = gone
