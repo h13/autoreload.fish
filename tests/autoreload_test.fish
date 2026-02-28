@@ -181,7 +181,22 @@ autoreload disable >/dev/null
 autoreload enable >/dev/null
 @test "enable clears autoreload_enabled" (not set -q autoreload_enabled; and echo yes) = yes
 
-# --- Test 18: _autoreload_uninstall cleans up ---
+# --- Test 18: help subcommand ---
+
+set -l output (autoreload help)
+@test "help shows commands section" (string match -q '*Commands:*' -- $output; and echo yes) = yes
+@test "help shows variables section" (string match -q '*Variables:*' -- $output; and echo yes) = yes
+
+set -l output (autoreload)
+@test "bare autoreload shows help" (string match -q '*Commands:*' -- $output; and echo yes) = yes
+
+# --- Test 19: unknown command shows error ---
+
+set -l output (autoreload nonexistent 2>&1)
+@test "unknown command shows error" (string match -q '*unknown command*' -- $output; and echo yes) = yes
+@test "unknown command suggests help" (string match -q '*autoreload help*' -- $output; and echo yes) = yes
+
+# --- Test 20: _autoreload_uninstall cleans up ---
 
 _autoreload_uninstall
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
