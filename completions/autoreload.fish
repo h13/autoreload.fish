@@ -4,3 +4,4 @@ complete -c autoreload -n __fish_use_subcommand -a version -d "Print version num
 complete -c autoreload -n __fish_use_subcommand -a reset -d "Refresh file tracking snapshot"
 complete -c autoreload -n __fish_use_subcommand -a enable -d "Enable file change detection"
 complete -c autoreload -n __fish_use_subcommand -a disable -d "Disable file change detection"
+complete -c autoreload -n __fish_use_subcommand -a help -d "Show help message"
