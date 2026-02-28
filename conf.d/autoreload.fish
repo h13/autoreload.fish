@@ -65,6 +65,19 @@ function autoreload -a cmd -d "autoreload.fish utility command"
     switch "$cmd"
         case status
             echo "autoreload v$__autoreload_version"
+            set -l flags
+            if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
+                set -a flags disabled
+            end
+            if set -q autoreload_quiet; and test "$autoreload_quiet" = 1
+                set -a flags quiet
+            end
+            if set -q autoreload_debug; and test "$autoreload_debug" = 1
+                set -a flags debug
+            end
+            if test (count $flags) -gt 0
+                echo "flags: "(string join ", " $flags)
+            end
             if set -q autoreload_exclude
                 echo "excluding: $autoreload_exclude"
             end
