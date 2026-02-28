@@ -30,6 +30,7 @@ end
 function __autoreload_snapshot
     set -g __autoreload_files
     set -g __autoreload_mtimes
+    set -g __autoreload_self_glob ""
 
     set -l config_file $__fish_config_dir/config.fish
     if test -f $config_file
@@ -41,6 +42,7 @@ function __autoreload_snapshot
         # exclude self to prevent recursive sourcing
         set -l resolved (builtin realpath $file 2>/dev/null)
         if test "$resolved" = "$__autoreload_self"
+            set __autoreload_self_glob $file
             continue
         end
         set -a __autoreload_files $file
@@ -80,8 +82,7 @@ function __autoreload_check --on-event fish_prompt
 
     # detect new files in conf.d
     for file in $__fish_config_dir/conf.d/*.fish
-        set -l resolved (builtin realpath $file 2>/dev/null)
-        if test "$resolved" = "$__autoreload_self"
+        if test "$file" = "$__autoreload_self_glob"
             continue
         end
         if not contains -- $file $__autoreload_files
@@ -126,6 +127,7 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     functions -e _autoreload_uninstall
     set -e __autoreload_version
     set -e __autoreload_self
+    set -e __autoreload_self_glob
     set -e __autoreload_files
     set -e __autoreload_mtimes
     set -e autoreload_enabled
