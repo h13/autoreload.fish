@@ -91,10 +91,20 @@ function autoreload -a cmd -d "autoreload.fish utility command"
             if not __autoreload_is_quiet
                 echo "autoreload: snapshot refreshed ("(count $__autoreload_files)" files)"
             end
+        case enable
+            set -e autoreload_enabled
+            if not __autoreload_is_quiet
+                echo "autoreload: enabled"
+            end
+        case disable
+            set -g autoreload_enabled 0
+            if not __autoreload_is_quiet
+                echo "autoreload: disabled"
+            end
         case version
             echo $__autoreload_version
         case '*'
-            echo "usage: autoreload <status|version|reset>" >&2
+            echo "usage: autoreload <status|version|reset|enable|disable>" >&2
             return 1
     end
 end
