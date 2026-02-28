@@ -148,7 +148,43 @@ set -l output (autoreload status)
 @test "status shows debug flag" (string match -q '*debug*' -- $output; and echo yes) = yes
 set -e autoreload_debug
 
-# --- Test 15: _autoreload_uninstall cleans up ---
+# --- Test 15: excluded new file is not sourced ---
+
+set -g autoreload_exclude excluded_new.fish
+__autoreload_snapshot
+echo "set -g __test_excluded_var bad" >$__test_conf_d/excluded_new.fish
+set -l output (__autoreload_check)
+@test "excluded new file is not sourced" (not set -q __test_excluded_var; and echo yes) = yes
+@test "excluded new file produces no output" -z "$output"
+command rm -f $__test_conf_d/excluded_new.fish
+set -e autoreload_exclude
+__autoreload_snapshot
+
+# --- Test 16: multiple files changed simultaneously ---
+
+echo "set -g __test_multi_a 1" >$__test_conf_d/multi_a.fish
+echo "set -g __test_multi_b 2" >$__test_conf_d/multi_b.fish
+__autoreload_snapshot
+sleep 1
+echo "set -g __test_multi_a 10" >$__test_conf_d/multi_a.fish
+echo "set -g __test_multi_b 20" >$__test_conf_d/multi_b.fish
+set -l output (__autoreload_check)
+@test "multiple changed files: a is sourced" "$__test_multi_a" = 10
+@test "multiple changed files: b is sourced" "$__test_multi_b" = 20
+@test "multiple changed files: output lists both" (string match -q '*multi_a.fish*multi_b.fish*' -- $output; and echo yes) = yes
+command rm -f $__test_conf_d/multi_a.fish $__test_conf_d/multi_b.fish
+set -e __test_multi_a
+set -e __test_multi_b
+__autoreload_snapshot
+
+# --- Test 17: enable and disable subcommands ---
+
+autoreload disable >/dev/null
+@test "disable sets autoreload_enabled to 0" "$autoreload_enabled" = 0
+autoreload enable >/dev/null
+@test "enable clears autoreload_enabled" (not set -q autoreload_enabled; and echo yes) = yes
+
+# --- Test 18: _autoreload_uninstall cleans up ---
 
 _autoreload_uninstall
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
