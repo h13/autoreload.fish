@@ -24,14 +24,48 @@ The plugin excludes itself from monitoring to prevent recursive sourcing.
 
 ## Configuration
 
-| Variable             | Default | Description                    |
-|----------------------|---------|--------------------------------|
-| `autoreload_enabled` | `1`     | Set to `0` to disable checking |
+| Variable             | Default | Description                          |
+|----------------------|---------|--------------------------------------|
+| `autoreload_enabled` | `1`     | Set to `0` to disable checking       |
+| `autoreload_debug`   | (unset) | Set to `1` to print debug diagnostics |
 
 ```fish
 # disable autoreload
 set -g autoreload_enabled 0
+
+# enable debug output
+set -g autoreload_debug 1
 ```
+
+## Debug mode
+
+When troubleshooting, enable debug mode to see what autoreload is doing:
+
+```fish
+set -g autoreload_debug 1
+```
+
+Each prompt will print tracking info to stderr:
+
+```
+autoreload: [debug] checking 5 files
+```
+
+Disable with `set -e autoreload_debug`.
+
+## Uninstall
+
+```fish
+fisher remove h13/autoreload.fish
+```
+
+This removes all functions and variables via the `autoreload_uninstall` event.
+
+## Limitations
+
+- Detection runs on each prompt — changes are picked up after you press Enter, not in real time.
+- Only monitors `config.fish` and `conf.d/*.fish`. Files sourced indirectly (e.g., from `functions/`) are not tracked.
+- If a sourced file has a syntax error, an error message is printed but the file is skipped.
 
 ## Compatibility
 
