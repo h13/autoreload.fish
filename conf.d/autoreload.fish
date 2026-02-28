@@ -39,7 +39,8 @@ function __autoreload_snapshot
 
     for file in $__fish_config_dir/conf.d/*.fish
         # exclude self to prevent recursive sourcing
-        if test (builtin realpath $file) = $__autoreload_self
+        set -l resolved (builtin realpath $file 2>/dev/null)
+        if test "$resolved" = "$__autoreload_self"
             continue
         end
         set -a __autoreload_files $file
@@ -79,7 +80,8 @@ function __autoreload_check --on-event fish_prompt
 
     # detect new files in conf.d
     for file in $__fish_config_dir/conf.d/*.fish
-        if test (builtin realpath $file) = $__autoreload_self
+        set -l resolved (builtin realpath $file 2>/dev/null)
+        if test "$resolved" = "$__autoreload_self"
             continue
         end
         if not contains -- $file $__autoreload_files
