@@ -392,28 +392,18 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     for key in $__autoreload_tracked_keys
         __autoreload_clear_tracking $key
     end
-    functions -e __autoreload_mtime
-    functions -e __autoreload_basename
-    functions -e __autoreload_debug
-    functions -e __autoreload_is_excluded
-    functions -e __autoreload_cleanup_enabled
-    functions -e __autoreload_key
-    functions -e __autoreload_clear_tracking
-    functions -e __autoreload_call_teardown
-    functions -e __autoreload_undo
-    functions -e __autoreload_is_quiet
-    functions -e __autoreload_source_file
-    functions -e __autoreload_snapshot
+    # remove all __autoreload_* functions dynamically
+    for fn in (functions --all --names | string match '__autoreload_*')
+        functions -e $fn
+    end
     functions -e autoreload
-    functions -e __autoreload_check
     functions -e _autoreload_install
     functions -e _autoreload_uninstall
-    set -e __autoreload_version
-    set -e __autoreload_self
-    set -e __autoreload_self_glob
-    set -e __autoreload_files
-    set -e __autoreload_mtimes
-    set -e __autoreload_tracked_keys
+    # remove all __autoreload_* variables dynamically
+    for var in (set --global --names | string match '__autoreload_*')
+        set -e $var
+    end
+    # remove user-facing configuration variables
     set -e autoreload_enabled
     set -e autoreload_quiet
     set -e autoreload_exclude
