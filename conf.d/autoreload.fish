@@ -103,13 +103,12 @@ function __autoreload_check --on-event fish_prompt
         end
     end
 
-    # report deleted files and refresh snapshot
+    # report deleted files
     if test (count $deleted) -gt 0
         if not __autoreload_is_quiet
             set -l names (string replace -r '.*/' '' $deleted)
             echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
         end
-        __autoreload_snapshot
     end
 
     # detect new files in conf.d
@@ -128,23 +127,27 @@ function __autoreload_check --on-event fish_prompt
         end
     end
 
-    if test (count $changed) -eq 0
+    # nothing happened — skip snapshot
+    if test (count $deleted) -eq 0; and test (count $changed) -eq 0
         return
     end
 
-    set -l sourced
-    for file in $changed
-        if source $file 2>/dev/null
-            set -a sourced $file
-        else
-            echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
+    # source changed files
+    if test (count $changed) -gt 0
+        set -l sourced
+        for file in $changed
+            if source $file 2>/dev/null
+                set -a sourced $file
+            else
+                echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
+            end
         end
-    end
 
-    if test (count $sourced) -gt 0
-        if not __autoreload_is_quiet
-            set -l names (string replace -r '.*/' '' $sourced)
-            echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
+        if test (count $sourced) -gt 0
+            if not __autoreload_is_quiet
+                set -l names (string replace -r '.*/' '' $sourced)
+                echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
+            end
         end
     end
 
