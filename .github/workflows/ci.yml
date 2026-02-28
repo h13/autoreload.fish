@@ -9,9 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: fish-shop/install-fish-shell@v2
-      - uses: fish-shop/install-plugin-manager@v2
-      - name: Install fishtape
-        run: fisher install jorgebucaran/fishtape
+      - name: Install fisher and fishtape
+        run: |
+          curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+          fisher install jorgebucaran/fisher
+          fisher install jorgebucaran/fishtape
         shell: fish {0}
       - uses: fish-shop/run-fishtape-tests@v2
         with:
