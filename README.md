@@ -33,7 +33,7 @@ The plugin excludes itself from monitoring to prevent recursive sourcing. Fisher
 
 | Variable              | Default | Description                                    |
 |-----------------------|---------|------------------------------------------------|
-| `autoreload_enabled`  | `1`     | Set to `0` to disable checking                 |
+| `autoreload_enabled`  | (unset) | Set to `0` to disable checking                 |
 | `autoreload_quiet`    | (unset) | Set to `1` to suppress sourced/removed messages |
 | `autoreload_exclude`  | (unset) | List of basenames to skip from monitoring       |
 | `autoreload_debug`    | (unset) | Set to `1` to print debug diagnostics           |
