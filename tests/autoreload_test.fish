@@ -399,6 +399,7 @@ set -e autoreload_cleanup
 _autoreload_uninstall
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
 @test "uninstall removes __autoreload_snapshot" (functions -q __autoreload_snapshot; or echo gone) = gone
+@test "uninstall removes __autoreload_source_file" (functions -q __autoreload_source_file; or echo gone) = gone
 @test "uninstall removes __autoreload_check" (functions -q __autoreload_check; or echo gone) = gone
 @test "uninstall removes __autoreload_version" (set -q __autoreload_version; or echo gone) = gone
 @test "uninstall removes __autoreload_files" (set -q __autoreload_files; or echo gone) = gone
