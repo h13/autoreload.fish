@@ -60,6 +60,7 @@ autoreload version  # print version number
 autoreload reset    # refresh file tracking snapshot
 autoreload enable   # enable file change detection
 autoreload disable  # disable file change detection
+autoreload help     # show help message
 ```
 
 ## Debug mode
@@ -97,7 +98,7 @@ This removes all functions and variables via the `autoreload_uninstall` event.
 
 ## Compatibility
 
-Works on macOS (BSD stat) and Linux (GNU stat) via automatic fallback.
+Works on macOS (BSD stat) and Linux (GNU stat) via automatic fallback. CI tests run on Fish 3.x and 4.x across both platforms.
 
 ## License
 
