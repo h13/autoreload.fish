@@ -91,6 +91,11 @@ function __autoreload_undo -a key
     __autoreload_clear_tracking $key
 end
 
+function __autoreload_is_excluded -a file
+    set -q autoreload_exclude; or return 1
+    contains -- (__autoreload_basename $file) $autoreload_exclude
+end
+
 function __autoreload_is_quiet
     set -q autoreload_quiet; and test "$autoreload_quiet" = 1
 end
@@ -202,12 +207,9 @@ function __autoreload_snapshot
             continue
         end
         # skip user-excluded files
-        if set -q autoreload_exclude
-            set -l basename (__autoreload_basename $file)
-            if contains -- $basename $autoreload_exclude
-                __autoreload_debug "excluding: $basename"
-                continue
-            end
+        if __autoreload_is_excluded $file
+            __autoreload_debug "excluding: "(__autoreload_basename $file)
+            continue
         end
         set -a __autoreload_files $file
         set -a __autoreload_mtimes (__autoreload_mtime $file)
@@ -340,12 +342,9 @@ function __autoreload_check --on-event fish_prompt
         if test "$file" = "$__autoreload_self_glob"
             continue
         end
-        if set -q autoreload_exclude
-            set -l basename (__autoreload_basename $file)
-            if contains -- $basename $autoreload_exclude
-                __autoreload_debug "excluding: $basename (new)"
-                continue
-            end
+        if __autoreload_is_excluded $file
+            __autoreload_debug "excluding: "(__autoreload_basename $file)" (new)"
+            continue
         end
         if not contains -- $file $__autoreload_files
             __autoreload_debug "new: "(__autoreload_basename $file)
@@ -396,6 +395,7 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     functions -e __autoreload_mtime
     functions -e __autoreload_basename
     functions -e __autoreload_debug
+    functions -e __autoreload_is_excluded
     functions -e __autoreload_cleanup_enabled
     functions -e __autoreload_key
     functions -e __autoreload_clear_tracking
