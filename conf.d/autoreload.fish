@@ -13,11 +13,11 @@ end
 
 if command stat -c %Y /dev/null &>/dev/null
     function __autoreload_mtime -a file
-        command stat -c %Y $file 2>/dev/null
+        command stat -c %Y $file 2>/dev/null | string trim
     end
 else
     function __autoreload_mtime -a file
-        /usr/bin/stat -f %m $file 2>/dev/null
+        /usr/bin/stat -f %m $file 2>/dev/null | string trim
     end
 end
 
