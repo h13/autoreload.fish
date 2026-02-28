@@ -53,6 +53,12 @@ function __autoreload_snapshot
             set __autoreload_self_glob $file
             continue
         end
+        if set -q autoreload_exclude
+            set -l basename (string replace -r '.*/' '' $file)
+            if contains -- $basename $autoreload_exclude
+                continue
+            end
+        end
         set -a __autoreload_files $file
         set -a __autoreload_mtimes (__autoreload_mtime $file)
     end
@@ -91,6 +97,12 @@ function __autoreload_check
     for file in $__fish_config_dir/conf.d/*.fish
         if test "$file" = "$__autoreload_self_glob"
             continue
+        end
+        if set -q autoreload_exclude
+            set -l basename (string replace -r '.*/' '' $file)
+            if contains -- $basename $autoreload_exclude
+                continue
+            end
         end
         if not contains -- $file $__autoreload_files
             set -a changed $file
@@ -151,6 +163,7 @@ function _autoreload_uninstall
     set -e __autoreload_mtimes
     set -e autoreload_enabled
     set -e autoreload_quiet
+    set -e autoreload_exclude
     set -e autoreload_debug
 end
 
@@ -222,7 +235,16 @@ set -l output (autoreload status)
 @test "autoreload status lists tracked files" (string match -q '*dummy.fish*' -- $output; and echo yes) = yes
 @test "autoreload version returns version" (autoreload version) = 1.0.0
 
-# --- Test 9: autoreload_quiet=1 suppresses messages ---
+# --- Test 9: autoreload_exclude skips files ---
+
+set -g autoreload_exclude dummy.fish
+__autoreload_snapshot
+@test "excluded file is not tracked" (not contains -- $__test_conf_d/dummy.fish $__autoreload_files; and echo yes) = yes
+@test "non-excluded file is still tracked" (contains -- $__test_conf_d/newfile.fish $__autoreload_files; and echo yes) = yes
+set -e autoreload_exclude
+__autoreload_snapshot
+
+# --- Test 10: autoreload_quiet=1 suppresses messages ---
 
 __autoreload_snapshot
 set -g autoreload_quiet 1
@@ -232,7 +254,7 @@ set -l output (__autoreload_check)
 @test "quiet mode suppresses sourced message" -z "$output"
 set -e autoreload_quiet
 
-# --- Test 10: _autoreload_uninstall cleans up ---
+# --- Test 11: _autoreload_uninstall cleans up ---
 
 set -g __autoreload_version 1.0.0
 _autoreload_uninstall

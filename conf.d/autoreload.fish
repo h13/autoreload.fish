@@ -45,6 +45,13 @@ function __autoreload_snapshot
             set __autoreload_self_glob $file
             continue
         end
+        # skip user-excluded files
+        if set -q autoreload_exclude
+            set -l basename (string replace -r '.*/' '' $file)
+            if contains -- $basename $autoreload_exclude
+                continue
+            end
+        end
         set -a __autoreload_files $file
         set -a __autoreload_mtimes (__autoreload_mtime $file)
     end
@@ -54,6 +61,9 @@ function autoreload -a cmd -d "autoreload.fish utility command"
     switch "$cmd"
         case status
             echo "autoreload v$__autoreload_version"
+            if set -q autoreload_exclude
+                echo "excluding: $autoreload_exclude"
+            end
             echo "tracking "(count $__autoreload_files)" files:"
             for file in $__autoreload_files
                 echo "  "(string replace -r '.*/' '' $file)
@@ -102,6 +112,12 @@ function __autoreload_check --on-event fish_prompt
     for file in $__fish_config_dir/conf.d/*.fish
         if test "$file" = "$__autoreload_self_glob"
             continue
+        end
+        if set -q autoreload_exclude
+            set -l basename (string replace -r '.*/' '' $file)
+            if contains -- $basename $autoreload_exclude
+                continue
+            end
         end
         if not contains -- $file $__autoreload_files
             set -a changed $file
@@ -153,5 +169,6 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     set -e __autoreload_mtimes
     set -e autoreload_enabled
     set -e autoreload_quiet
+    set -e autoreload_exclude
     set -e autoreload_debug
 end
