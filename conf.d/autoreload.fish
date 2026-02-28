@@ -72,10 +72,15 @@ function autoreload -a cmd -d "autoreload.fish utility command"
             for file in $__autoreload_files
                 echo "  "(string replace -r '.*/' '' $file)
             end
+        case reset
+            __autoreload_snapshot
+            if not __autoreload_is_quiet
+                echo "autoreload: snapshot refreshed ("(count $__autoreload_files)" files)"
+            end
         case version
             echo $__autoreload_version
         case '*'
-            echo "usage: autoreload <status|version>" >&2
+            echo "usage: autoreload <status|version|reset>" >&2
             return 1
     end
 end
