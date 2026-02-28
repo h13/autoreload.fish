@@ -71,19 +71,19 @@ function __autoreload_undo -a key
     end
 
     # undo abbreviations
-    set varname __autoreload_added_abbrs_$key
+    set -l varname __autoreload_added_abbrs_$key
     for name in $$varname
         abbr --erase $name 2>/dev/null
     end
 
     # undo functions
-    set varname __autoreload_added_funcs_$key
+    set -l varname __autoreload_added_funcs_$key
     for name in $$varname
         functions -e $name 2>/dev/null
     end
 
     # undo global variables
-    set varname __autoreload_added_vars_$key
+    set -l varname __autoreload_added_vars_$key
     for name in $$varname
         set -eg $name
     end
