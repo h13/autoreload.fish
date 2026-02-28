@@ -27,6 +27,10 @@ function __autoreload_debug -a msg
     end
 end
 
+function __autoreload_is_quiet
+    set -q autoreload_quiet; and test "$autoreload_quiet" = 1
+end
+
 function __autoreload_snapshot
     set -g __autoreload_files
     set -g __autoreload_mtimes
@@ -101,7 +105,7 @@ function __autoreload_check --on-event fish_prompt
 
     # report deleted files and refresh snapshot
     if test (count $deleted) -gt 0
-        if not set -q autoreload_quiet; or test "$autoreload_quiet" != 1
+        if not __autoreload_is_quiet
             set -l names (string replace -r '.*/' '' $deleted)
             echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
         end
@@ -138,7 +142,7 @@ function __autoreload_check --on-event fish_prompt
     end
 
     if test (count $sourced) -gt 0
-        if not set -q autoreload_quiet; or test "$autoreload_quiet" != 1
+        if not __autoreload_is_quiet
             set -l names (string replace -r '.*/' '' $sourced)
             echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
         end
@@ -157,6 +161,7 @@ end
 function _autoreload_uninstall --on-event autoreload_uninstall
     functions -e __autoreload_mtime
     functions -e __autoreload_debug
+    functions -e __autoreload_is_quiet
     functions -e __autoreload_snapshot
     functions -e autoreload
     functions -e __autoreload_check
