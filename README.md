@@ -16,13 +16,13 @@ fisher install h13/autoreload.fish
 
 1. On load, records the modification time of `config.fish` and every file in `conf.d/`.
 2. On each prompt (`fish_prompt` event), compares current mtimes against the snapshot.
-3. If a file has changed — or a new file has appeared in `conf.d/` — it is `source`d and a message is printed:
+3. If a file has changed, a new file has appeared in `conf.d/`, or `config.fish` has been created — it is `source`d and a message is printed:
 
 ```
 autoreload: sourced aliases.fish paths.fish
 ```
 
-The plugin excludes itself from monitoring to prevent recursive sourcing.
+The plugin excludes itself from monitoring to prevent recursive sourcing. Fisher installs plugins via symlinks, so the plugin resolves its real path with `builtin realpath` to correctly identify and skip itself regardless of the symlink name.
 
 ## Configuration
 
@@ -67,6 +67,9 @@ Each prompt will print tracking info to stderr:
 
 ```
 autoreload: [debug] checking 5 files
+autoreload: [debug] changed: aliases.fish
+autoreload: [debug] new: newplugin.fish
+autoreload: [debug] deleted: old.fish
 ```
 
 Disable with `set -e autoreload_debug`.
