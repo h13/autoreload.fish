@@ -47,16 +47,26 @@ function __autoreload_check --on-event fish_prompt
     end
 
     set -l changed
+    set -l deleted
 
-    # check tracked files for changes
+    # check tracked files for changes or deletion
     for i in (seq (count $__autoreload_files))
         set -l file $__autoreload_files[$i]
-        if test -f $file
-            set -l current (__autoreload_mtime $file)
-            if test "$current" != "$__autoreload_mtimes[$i]"
-                set -a changed $file
-            end
+        if not test -f $file
+            set -a deleted $file
+            continue
         end
+        set -l current (__autoreload_mtime $file)
+        if test "$current" != "$__autoreload_mtimes[$i]"
+            set -a changed $file
+        end
+    end
+
+    # report deleted files and refresh snapshot
+    if test (count $deleted) -gt 0
+        set -l names (string replace -r '.*/' '' $deleted)
+        echo "autoreload: removed $names"
+        __autoreload_snapshot
     end
 
     # detect new files in conf.d
