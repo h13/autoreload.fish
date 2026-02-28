@@ -65,7 +65,7 @@ function __autoreload_check --on-event fish_prompt
     # report deleted files and refresh snapshot
     if test (count $deleted) -gt 0
         set -l names (string replace -r '.*/' '' $deleted)
-        echo "autoreload: removed $names"
+        echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
         __autoreload_snapshot
     end
 
@@ -88,13 +88,13 @@ function __autoreload_check --on-event fish_prompt
         if source $file 2>&1
             set -a sourced $file
         else
-            echo "autoreload: error sourcing "(string replace -r '.*/' '' $file) >&2
+            echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
         end
     end
 
     if test (count $sourced) -gt 0
         set -l names (string replace -r '.*/' '' $sourced)
-        echo "autoreload: sourced $names"
+        echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
     end
 
     __autoreload_snapshot
