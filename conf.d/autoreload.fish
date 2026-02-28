@@ -50,6 +50,22 @@ function __autoreload_snapshot
     end
 end
 
+function autoreload -a cmd -d "autoreload.fish utility command"
+    switch "$cmd"
+        case status
+            echo "autoreload v$__autoreload_version"
+            echo "tracking "(count $__autoreload_files)" files:"
+            for file in $__autoreload_files
+                echo "  "(string replace -r '.*/' '' $file)
+            end
+        case version
+            echo $__autoreload_version
+        case '*'
+            echo "usage: autoreload <status|version>" >&2
+            return 1
+    end
+end
+
 function __autoreload_check --on-event fish_prompt
     if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
         return
@@ -126,6 +142,7 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     functions -e __autoreload_mtime
     functions -e __autoreload_debug
     functions -e __autoreload_snapshot
+    functions -e autoreload
     functions -e __autoreload_check
     functions -e _autoreload_install
     functions -e _autoreload_uninstall

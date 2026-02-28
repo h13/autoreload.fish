@@ -120,10 +120,27 @@ function __autoreload_check
     __autoreload_snapshot
 end
 
+function autoreload -a cmd
+    switch "$cmd"
+        case status
+            echo "autoreload v$__autoreload_version"
+            echo "tracking "(count $__autoreload_files)" files:"
+            for file in $__autoreload_files
+                echo "  "(string replace -r '.*/' '' $file)
+            end
+        case version
+            echo $__autoreload_version
+        case '*'
+            echo "usage: autoreload <status|version>" >&2
+            return 1
+    end
+end
+
 function _autoreload_uninstall
     functions -e __autoreload_mtime
     functions -e __autoreload_debug
     functions -e __autoreload_snapshot
+    functions -e autoreload
     functions -e __autoreload_check
     functions -e _autoreload_install
     functions -e _autoreload_uninstall
@@ -196,7 +213,16 @@ set -l output (__autoreload_check)
 @test "disabled when autoreload_enabled=0" -z "$output"
 set -e autoreload_enabled
 
-# --- Test 8: autoreload_quiet=1 suppresses messages ---
+# --- Test 8: autoreload status command ---
+
+set -g __autoreload_version 1.0.0
+__autoreload_snapshot
+set -l output (autoreload status)
+@test "autoreload status shows version" (string match -q '*v1.0.0*' -- $output; and echo yes) = yes
+@test "autoreload status lists tracked files" (string match -q '*dummy.fish*' -- $output; and echo yes) = yes
+@test "autoreload version returns version" (autoreload version) = 1.0.0
+
+# --- Test 9: autoreload_quiet=1 suppresses messages ---
 
 __autoreload_snapshot
 set -g autoreload_quiet 1
@@ -206,7 +232,7 @@ set -l output (__autoreload_check)
 @test "quiet mode suppresses sourced message" -z "$output"
 set -e autoreload_quiet
 
-# --- Test 9: _autoreload_uninstall cleans up ---
+# --- Test 10: _autoreload_uninstall cleans up ---
 
 set -g __autoreload_version 1.0.0
 _autoreload_uninstall
