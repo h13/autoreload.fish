@@ -45,6 +45,38 @@ function __autoreload_clear_tracking -a key
     end
 end
 
+function __autoreload_undo -a key
+    # undo PATH entries (try fish_user_paths first, then PATH directly)
+    set -l varname __autoreload_added_paths_$key
+    for p in $$varname
+        if set -l idx (contains -i -- $p $fish_user_paths)
+            set -e fish_user_paths[$idx]
+        else if set -l idx (contains -i -- $p $PATH)
+            set -e PATH[$idx]
+        end
+    end
+
+    # undo abbreviations
+    set varname __autoreload_added_abbrs_$key
+    for name in $$varname
+        abbr --erase $name 2>/dev/null
+    end
+
+    # undo functions
+    set varname __autoreload_added_funcs_$key
+    for name in $$varname
+        functions -e $name 2>/dev/null
+    end
+
+    # undo global variables
+    set varname __autoreload_added_vars_$key
+    for name in $$varname
+        set -eg $name
+    end
+
+    __autoreload_clear_tracking $key
+end
+
 function __autoreload_is_quiet
     set -q autoreload_quiet; and test "$autoreload_quiet" = 1
 end
@@ -168,9 +200,18 @@ function __autoreload_check --on-event fish_prompt
         end
     end
 
-    # report deleted files
+    # handle deleted files: undo side effects and report
     if test (count $deleted) -gt 0
         __autoreload_debug "deleted: "(string replace -r '.*/' '' $deleted)
+        if __autoreload_cleanup_enabled
+            for file in $deleted
+                set -l key (__autoreload_key $file)
+                if contains -- $key $__autoreload_tracked_keys
+                    __autoreload_debug "undoing state for deleted $key"
+                    __autoreload_undo $key
+                end
+            end
+        end
         if not __autoreload_is_quiet
             set -l names (string replace -r '.*/' '' $deleted)
             echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
@@ -212,6 +253,14 @@ function __autoreload_check --on-event fish_prompt
         set -l sourced
         for file in $changed
             set -l key (__autoreload_key $file)
+
+            # undo previous side effects before re-sourcing
+            if __autoreload_cleanup_enabled
+                if contains -- $key $__autoreload_tracked_keys
+                    __autoreload_debug "undoing previous state for $key"
+                    __autoreload_undo $key
+                end
+            end
 
             # capture pre-source state when cleanup is enabled
             set -l pre_vars
