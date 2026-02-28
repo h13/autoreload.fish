@@ -1,6 +1,11 @@
 # autoreload.fish
 
 [![CI](https://github.com/h13/autoreload.fish/actions/workflows/ci.yml/badge.svg)](https://github.com/h13/autoreload.fish/actions/workflows/ci.yml)
+[![Fish Shell](https://img.shields.io/badge/fish-3.1%2B-blue?logo=gnubash&logoColor=white)](https://fishshell.com/)
+[![Fisher](https://img.shields.io/badge/fisher-plugin-007ec6?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHRleHQgeD0iMiIgeT0iMTMiIGZvbnQtc2l6ZT0iMTIiPvCfkKA8L3RleHQ+PC9zdmc+)](https://github.com/jorgebucaran/fisher)
+[![GitHub release](https://img.shields.io/github/v/release/h13/autoreload.fish?color=green)](https://github.com/h13/autoreload.fish/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)]()
 
 > Auto-reload fish config files when they change.
 
@@ -83,7 +88,7 @@ When enabled, autoreload tracks four categories of side effects per file:
 |----------------|-----------------------|---------------------------------------------------|
 | PATH entries   | `$PATH`               | Remove from `$fish_user_paths`, then `$PATH`       |
 | Global vars    | `set --global --names` | `set -eg`                                          |
-| Functions      | `functions --names`    | `functions -e`                                     |
+| Functions      | `functions --all --names` | `functions -e`                                  |
 | Abbreviations  | `abbr --list`          | `abbr --erase`                                     |
 
 On each re-source, the plugin takes a snapshot before and after `source`, computes the diff, and stores the additions. On the next change, it undoes those additions before re-sourcing.
