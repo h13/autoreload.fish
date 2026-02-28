@@ -45,6 +45,16 @@ function __autoreload_clear_tracking -a key
     end
 end
 
+function __autoreload_call_teardown -a file
+    set -l basename (string replace -r '.*/' '' $file)
+    set -l name (string replace -r '\.fish$' '' $basename)
+    set -l teardown_fn __"$name"_teardown
+    if functions -q $teardown_fn
+        __autoreload_debug "calling $teardown_fn"
+        $teardown_fn
+    end
+end
+
 function __autoreload_undo -a key
     # undo PATH entries (try fish_user_paths first, then PATH directly)
     set -l varname __autoreload_added_paths_$key
@@ -205,6 +215,7 @@ function __autoreload_check --on-event fish_prompt
         __autoreload_debug "deleted: "(string replace -r '.*/' '' $deleted)
         if __autoreload_cleanup_enabled
             for file in $deleted
+                __autoreload_call_teardown $file
                 set -l key (__autoreload_key $file)
                 if contains -- $key $__autoreload_tracked_keys
                     __autoreload_debug "undoing state for deleted $key"
@@ -254,8 +265,9 @@ function __autoreload_check --on-event fish_prompt
         for file in $changed
             set -l key (__autoreload_key $file)
 
-            # undo previous side effects before re-sourcing
+            # call teardown hook and undo previous side effects before re-sourcing
             if __autoreload_cleanup_enabled
+                __autoreload_call_teardown $file
                 if contains -- $key $__autoreload_tracked_keys
                     __autoreload_debug "undoing previous state for $key"
                     __autoreload_undo $key
@@ -365,6 +377,8 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     functions -e __autoreload_cleanup_enabled
     functions -e __autoreload_key
     functions -e __autoreload_clear_tracking
+    functions -e __autoreload_call_teardown
+    functions -e __autoreload_undo
     functions -e __autoreload_is_quiet
     functions -e __autoreload_snapshot
     functions -e autoreload
