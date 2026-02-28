@@ -4,11 +4,30 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            fish-ppa: release-3
+          - os: ubuntu-latest
+            fish-ppa: release-4
+          - os: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: fish-shop/install-fish-shell@v2
+      - name: Install fish shell (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-add-repository --yes --no-update ppa:fish-shell/${{ matrix.fish-ppa }}
+          sudo apt-get update --quiet=2
+          sudo apt-get install --yes fish
+        shell: bash
+      - name: Install fish shell (macOS)
+        if: runner.os == 'macOS'
+        run: brew install fish
+        shell: bash
+      - name: Show fish version
+        run: fish --version
+        shell: bash
       - name: Install fisher and fishtape
         run: |
           curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
