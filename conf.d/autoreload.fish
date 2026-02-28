@@ -53,6 +53,7 @@ function __autoreload_snapshot
         if set -q autoreload_exclude
             set -l basename (string replace -r '.*/' '' $file)
             if contains -- $basename $autoreload_exclude
+                __autoreload_debug "excluding: $basename"
                 continue
             end
         end
@@ -146,6 +147,7 @@ function __autoreload_check --on-event fish_prompt
         if set -q autoreload_exclude
             set -l basename (string replace -r '.*/' '' $file)
             if contains -- $basename $autoreload_exclude
+                __autoreload_debug "excluding: $basename (new)"
                 continue
             end
         end
