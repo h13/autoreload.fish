@@ -211,10 +211,77 @@ function __autoreload_check --on-event fish_prompt
     if test (count $changed) -gt 0
         set -l sourced
         for file in $changed
+            set -l key (__autoreload_key $file)
+
+            # capture pre-source state when cleanup is enabled
+            set -l pre_vars
+            set -l pre_funcs
+            set -l pre_abbrs
+            set -l pre_paths
+            if __autoreload_cleanup_enabled
+                set pre_vars (set --global --names)
+                set pre_funcs (functions --names)
+                set pre_abbrs (abbr --list | string replace -r '\s.*' '')
+                set pre_paths $PATH
+            end
+
             if source $file
                 set -a sourced $file
+
+                # compute diff and save tracking data
+                if __autoreload_cleanup_enabled
+                    set -l post_vars (set --global --names)
+                    set -l post_funcs (functions --names)
+                    set -l post_abbrs (abbr --list | string replace -r '\s.*' '')
+                    set -l post_paths $PATH
+
+                    # track new variables (exclude __autoreload_* to avoid self-pollution)
+                    set -g __autoreload_added_vars_$key
+                    for name in $post_vars
+                        if string match -q '__autoreload_*' $name; continue; end
+                        if not contains -- $name $pre_vars
+                            set -a __autoreload_added_vars_$key $name
+                        end
+                    end
+
+                    # track new functions
+                    set -g __autoreload_added_funcs_$key
+                    for name in $post_funcs
+                        if string match -q '__autoreload_*' $name; continue; end
+                        if not contains -- $name $pre_funcs
+                            set -a __autoreload_added_funcs_$key $name
+                        end
+                    end
+
+                    # track new abbreviations
+                    set -g __autoreload_added_abbrs_$key
+                    for name in $post_abbrs
+                        if not contains -- $name $pre_abbrs
+                            set -a __autoreload_added_abbrs_$key $name
+                        end
+                    end
+
+                    # track new PATH entries
+                    set -g __autoreload_added_paths_$key
+                    for p in $post_paths
+                        if not contains -- $p $pre_paths
+                            set -a __autoreload_added_paths_$key $p
+                        end
+                    end
+
+                    # register this key
+                    if not contains -- $key $__autoreload_tracked_keys
+                        set -a __autoreload_tracked_keys $key
+                    end
+
+                    __autoreload_debug "tracking $key: vars="(count $$__autoreload_added_vars_$key)" funcs="(count $$__autoreload_added_funcs_$key)" abbrs="(count $$__autoreload_added_abbrs_$key)" paths="(count $$__autoreload_added_paths_$key)
+                end
             else
                 echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
+                # clear stale tracking on source failure
+                if __autoreload_cleanup_enabled
+                    __autoreload_clear_tracking $key
+                end
             end
         end
 
