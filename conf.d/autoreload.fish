@@ -91,6 +91,94 @@ function __autoreload_is_quiet
     set -q autoreload_quiet; and test "$autoreload_quiet" = 1
 end
 
+function __autoreload_source_file -a file
+    set -l key (__autoreload_key $file)
+
+    # call teardown hook and undo previous side effects before re-sourcing
+    if __autoreload_cleanup_enabled
+        __autoreload_call_teardown $file
+        if contains -- $key $__autoreload_tracked_keys
+            __autoreload_debug "undoing previous state for $key"
+            __autoreload_undo $key
+        end
+    end
+
+    # capture pre-source state when cleanup is enabled
+    set -l pre_vars
+    set -l pre_funcs
+    set -l pre_abbrs
+    set -l pre_paths
+    if __autoreload_cleanup_enabled
+        set pre_vars (set --global --names)
+        set pre_funcs (functions --all --names)
+        set pre_abbrs (abbr --list)
+        set pre_paths $PATH
+    end
+
+    if not source $file
+        echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
+        if __autoreload_cleanup_enabled
+            __autoreload_clear_tracking $key
+        end
+        return 1
+    end
+
+    # compute diff and save tracking data
+    if __autoreload_cleanup_enabled
+        set -l post_vars (set --global --names)
+        set -l post_funcs (functions --all --names)
+        set -l post_abbrs (abbr --list)
+        set -l post_paths $PATH
+
+        # track new variables (exclude __autoreload_* to avoid self-pollution)
+        set -g __autoreload_added_vars_$key
+        for name in $post_vars
+            if string match -q '__autoreload_*' $name; continue; end
+            if not contains -- $name $pre_vars
+                set -a __autoreload_added_vars_$key $name
+            end
+        end
+
+        # track new functions
+        set -g __autoreload_added_funcs_$key
+        for name in $post_funcs
+            if string match -q '__autoreload_*' $name; continue; end
+            if not contains -- $name $pre_funcs
+                set -a __autoreload_added_funcs_$key $name
+            end
+        end
+
+        # track new abbreviations
+        set -g __autoreload_added_abbrs_$key
+        for name in $post_abbrs
+            if not contains -- $name $pre_abbrs
+                set -a __autoreload_added_abbrs_$key $name
+            end
+        end
+
+        # track new PATH entries
+        set -g __autoreload_added_paths_$key
+        for p in $post_paths
+            if not contains -- $p $pre_paths
+                set -a __autoreload_added_paths_$key $p
+            end
+        end
+
+        # register this key
+        if not contains -- $key $__autoreload_tracked_keys
+            set -a __autoreload_tracked_keys $key
+        end
+
+        set -l _vn __autoreload_added_vars_$key
+        set -l _fn __autoreload_added_funcs_$key
+        set -l _an __autoreload_added_abbrs_$key
+        set -l _pn __autoreload_added_paths_$key
+        __autoreload_debug "tracking $key: vars="(count $$_vn)" funcs="(count $$_fn)" abbrs="(count $$_an)" paths="(count $$_pn)
+    end
+
+    return 0
+end
+
 function __autoreload_snapshot
     set -g __autoreload_files
     set -g __autoreload_mtimes
@@ -270,90 +358,8 @@ function __autoreload_check --on-event fish_prompt
     if test (count $changed) -gt 0
         set -l sourced
         for file in $changed
-            set -l key (__autoreload_key $file)
-
-            # call teardown hook and undo previous side effects before re-sourcing
-            if __autoreload_cleanup_enabled
-                __autoreload_call_teardown $file
-                if contains -- $key $__autoreload_tracked_keys
-                    __autoreload_debug "undoing previous state for $key"
-                    __autoreload_undo $key
-                end
-            end
-
-            # capture pre-source state when cleanup is enabled
-            set -l pre_vars
-            set -l pre_funcs
-            set -l pre_abbrs
-            set -l pre_paths
-            if __autoreload_cleanup_enabled
-                set pre_vars (set --global --names)
-                set pre_funcs (functions --all --names)
-                set pre_abbrs (abbr --list)
-                set pre_paths $PATH
-            end
-
-            if source $file
+            if __autoreload_source_file $file
                 set -a sourced $file
-
-                # compute diff and save tracking data
-                if __autoreload_cleanup_enabled
-                    set -l post_vars (set --global --names)
-                    set -l post_funcs (functions --all --names)
-                    set -l post_abbrs (abbr --list)
-                    set -l post_paths $PATH
-
-                    # track new variables (exclude __autoreload_* to avoid self-pollution)
-                    set -g __autoreload_added_vars_$key
-                    for name in $post_vars
-                        if string match -q '__autoreload_*' $name; continue; end
-                        if not contains -- $name $pre_vars
-                            set -a __autoreload_added_vars_$key $name
-                        end
-                    end
-
-                    # track new functions
-                    set -g __autoreload_added_funcs_$key
-                    for name in $post_funcs
-                        if string match -q '__autoreload_*' $name; continue; end
-                        if not contains -- $name $pre_funcs
-                            set -a __autoreload_added_funcs_$key $name
-                        end
-                    end
-
-                    # track new abbreviations
-                    set -g __autoreload_added_abbrs_$key
-                    for name in $post_abbrs
-                        if not contains -- $name $pre_abbrs
-                            set -a __autoreload_added_abbrs_$key $name
-                        end
-                    end
-
-                    # track new PATH entries
-                    set -g __autoreload_added_paths_$key
-                    for p in $post_paths
-                        if not contains -- $p $pre_paths
-                            set -a __autoreload_added_paths_$key $p
-                        end
-                    end
-
-                    # register this key
-                    if not contains -- $key $__autoreload_tracked_keys
-                        set -a __autoreload_tracked_keys $key
-                    end
-
-                    set -l _vn __autoreload_added_vars_$key
-                    set -l _fn __autoreload_added_funcs_$key
-                    set -l _an __autoreload_added_abbrs_$key
-                    set -l _pn __autoreload_added_paths_$key
-                    __autoreload_debug "tracking $key: vars="(count $$_vn)" funcs="(count $$_fn)" abbrs="(count $$_an)" paths="(count $$_pn)
-                end
-            else
-                echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
-                # clear stale tracking on source failure
-                if __autoreload_cleanup_enabled
-                    __autoreload_clear_tracking $key
-                end
             end
         end
 
@@ -391,6 +397,7 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     functions -e __autoreload_call_teardown
     functions -e __autoreload_undo
     functions -e __autoreload_is_quiet
+    functions -e __autoreload_source_file
     functions -e __autoreload_snapshot
     functions -e autoreload
     functions -e __autoreload_check
