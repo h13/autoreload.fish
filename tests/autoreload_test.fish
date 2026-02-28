@@ -19,12 +19,17 @@ set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
 # - Preserve pre-set __autoreload_self instead of resolving from status filename
 # - Disable empty-self guard (we already set it)
 # - Remove --on-event so __autoreload_check can be called directly
-set -l plugin_file (builtin realpath (status dirname)/../conf.d/autoreload.fish)
-string replace 'if not status is-interactive' 'if false' <$plugin_file \
-    | string replace 'set -g __autoreload_self (builtin realpath (status filename))' '# __autoreload_self already set by test' \
-    | string replace 'if test -z "$__autoreload_self"' 'if false' \
-    | string replace -- '--on-event fish_prompt' '' \
-    | source
+set -g __test_plugin_file (builtin realpath (status dirname)/../conf.d/autoreload.fish)
+
+function __test_source_plugin
+    string replace 'if not status is-interactive' 'if false' <$__test_plugin_file \
+        | string replace 'set -g __autoreload_self (builtin realpath (status filename))' '# __autoreload_self already set by test' \
+        | string replace 'if test -z "$__autoreload_self"' 'if false' \
+        | string replace -- '--on-event fish_prompt' '' \
+        | source
+end
+
+__test_source_plugin
 
 # --- Test 1: __autoreload_mtime returns a timestamp ---
 
@@ -87,9 +92,9 @@ set -e autoreload_enabled
 
 __autoreload_snapshot
 set -l output (autoreload status)
-@test "autoreload status shows version" (string match -q '*v1.2.0*' -- $output; and echo yes) = yes
+@test "autoreload status shows version" (string match -q "*v$__autoreload_version*" -- $output; and echo yes) = yes
 @test "autoreload status lists tracked files" (string match -q '*dummy.fish*' -- $output; and echo yes) = yes
-@test "autoreload version returns version" (autoreload version) = 1.2.0
+@test "autoreload version returns version" (autoreload version) = $__autoreload_version
 
 # --- Test 9: autoreload_exclude skips files ---
 
@@ -381,11 +386,7 @@ set -l key (__autoreload_key $__test_conf_d/uninstall_track.fish)
 _autoreload_uninstall
 
 # Re-source production code for final uninstall test
-string replace 'if not status is-interactive' 'if false' <$plugin_file \
-    | string replace 'set -g __autoreload_self (builtin realpath (status filename))' '# __autoreload_self already set by test' \
-    | string replace 'if test -z "$__autoreload_self"' 'if false' \
-    | string replace -- '--on-event fish_prompt' '' \
-    | source
+__test_source_plugin
 
 set -g __fish_config_dir $__test_dir
 @test "uninstall tracking: tracking var cleaned" (not set -q __autoreload_added_vars_$key; and echo yes) = yes
@@ -407,6 +408,8 @@ _autoreload_uninstall
 # --- Cleanup ---
 
 command rm -rf $__test_dir
+functions -e __test_source_plugin
+set -e __test_plugin_file
 set -e __test_dir
 set -e __test_conf_d
 set -e __test_new_file_var
