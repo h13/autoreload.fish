@@ -41,7 +41,7 @@ function __autoreload_cleanup_enabled
 end
 
 function __autoreload_key -a file
-    __autoreload_basename $file | string replace -ra '[^a-zA-Z0-9_]' '_'
+    __autoreload_basename $file | string replace -ra '[^a-zA-Z0-9_]' _
 end
 
 function __autoreload_clear_tracking -a key
@@ -143,7 +143,9 @@ function __autoreload_source_file -a file
         # track new variables (exclude __autoreload_* to avoid self-pollution)
         set -g __autoreload_added_vars_$key
         for name in $post_vars
-            if string match -q '__autoreload_*' $name; continue; end
+            if string match -q '__autoreload_*' $name
+                continue
+            end
             if not contains -- $name $pre_vars
                 set -a __autoreload_added_vars_$key $name
             end
@@ -152,7 +154,9 @@ function __autoreload_source_file -a file
         # track new functions
         set -g __autoreload_added_funcs_$key
         for name in $post_funcs
-            if string match -q '__autoreload_*' $name; continue; end
+            if string match -q '__autoreload_*' $name
+                continue
+            end
             if not contains -- $name $pre_funcs
                 set -a __autoreload_added_funcs_$key $name
             end

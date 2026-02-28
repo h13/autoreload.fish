@@ -73,7 +73,7 @@ set -l output (__autoreload_check)
 # --- Test 6: source failure shows error ---
 
 __autoreload_snapshot
-echo "if" >$__test_conf_d/broken.fish
+echo if >$__test_conf_d/broken.fish
 set -l output (__autoreload_check 2>&1)
 @test "source failure shows error message" (string match -q '*error*broken.fish*' -- $output; and echo yes) = yes
 command rm -f $__test_conf_d/broken.fish
@@ -370,7 +370,7 @@ echo "set -g __test_fail_var 1" >$__test_conf_d/fail_track.fish
 set -l output (__autoreload_check)
 @test "source fail: var set on first source" "$__test_fail_var" = 1
 # break the file
-echo "if" >$__test_conf_d/fail_track.fish
+echo if >$__test_conf_d/fail_track.fish
 command touch -t 201201010000 $__test_conf_d/fail_track.fish
 set -l output (__autoreload_check 2>&1)
 # tracking should be cleared after failure
