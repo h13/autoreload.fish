@@ -21,6 +21,12 @@ else
     end
 end
 
+function __autoreload_debug -a msg
+    if set -q autoreload_debug; and test "$autoreload_debug" = 1
+        echo "autoreload: [debug] $msg" >&2
+    end
+end
+
 function __autoreload_snapshot
     set -g __autoreload_files
     set -g __autoreload_mtimes
@@ -45,6 +51,8 @@ function __autoreload_check --on-event fish_prompt
     if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
         return
     end
+
+    __autoreload_debug "checking "(count $__autoreload_files)" files"
 
     set -l changed
     set -l deleted
@@ -109,6 +117,7 @@ end
 
 function _autoreload_uninstall --on-event autoreload_uninstall
     functions -e __autoreload_mtime
+    functions -e __autoreload_debug
     functions -e __autoreload_snapshot
     functions -e __autoreload_check
     functions -e _autoreload_install
@@ -118,4 +127,5 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     set -e __autoreload_files
     set -e __autoreload_mtimes
     set -e autoreload_enabled
+    set -e autoreload_debug
 end
