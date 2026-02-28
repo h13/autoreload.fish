@@ -83,12 +83,19 @@ function __autoreload_check --on-event fish_prompt
         return
     end
 
+    set -l sourced
     for file in $changed
-        source $file
+        if source $file 2>&1
+            set -a sourced $file
+        else
+            echo "autoreload: error sourcing "(string replace -r '.*/' '' $file) >&2
+        end
     end
 
-    set -l names (string replace -r '.*/' '' $changed)
-    echo "autoreload: sourced $names"
+    if test (count $sourced) -gt 0
+        set -l names (string replace -r '.*/' '' $sourced)
+        echo "autoreload: sourced $names"
+    end
 
     __autoreload_snapshot
 end
