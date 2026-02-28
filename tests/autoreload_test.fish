@@ -81,8 +81,10 @@ function __autoreload_check
     end
 
     if test (count $deleted) -gt 0
-        set -l names (string replace -r '.*/' '' $deleted)
-        echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
+        if not set -q autoreload_quiet; or test "$autoreload_quiet" != 1
+            set -l names (string replace -r '.*/' '' $deleted)
+            echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
+        end
         __autoreload_snapshot
     end
 
@@ -109,8 +111,10 @@ function __autoreload_check
     end
 
     if test (count $sourced) -gt 0
-        set -l names (string replace -r '.*/' '' $sourced)
-        echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
+        if not set -q autoreload_quiet; or test "$autoreload_quiet" != 1
+            set -l names (string replace -r '.*/' '' $sourced)
+            echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
+        end
     end
 
     __autoreload_snapshot
@@ -129,6 +133,7 @@ function _autoreload_uninstall
     set -e __autoreload_files
     set -e __autoreload_mtimes
     set -e autoreload_enabled
+    set -e autoreload_quiet
     set -e autoreload_debug
 end
 
@@ -191,7 +196,17 @@ set -l output (__autoreload_check)
 @test "disabled when autoreload_enabled=0" -z "$output"
 set -e autoreload_enabled
 
-# --- Test 8: _autoreload_uninstall cleans up ---
+# --- Test 8: autoreload_quiet=1 suppresses messages ---
+
+__autoreload_snapshot
+set -g autoreload_quiet 1
+sleep 1
+touch $__test_conf_d/dummy.fish
+set -l output (__autoreload_check)
+@test "quiet mode suppresses sourced message" -z "$output"
+set -e autoreload_quiet
+
+# --- Test 9: _autoreload_uninstall cleans up ---
 
 set -g __autoreload_version 1.0.0
 _autoreload_uninstall
