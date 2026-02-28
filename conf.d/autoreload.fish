@@ -107,21 +107,17 @@ end
 function __autoreload_source_file -a file
     set -l key (__autoreload_key $file)
 
-    # call teardown hook and undo previous side effects before re-sourcing
+    # undo previous side effects and capture pre-source state
+    set -l pre_vars
+    set -l pre_funcs
+    set -l pre_abbrs
+    set -l pre_paths
     if __autoreload_cleanup_enabled
         __autoreload_call_teardown $file
         if contains -- $key $__autoreload_tracked_keys
             __autoreload_debug "undoing previous state for $key"
             __autoreload_undo $key
         end
-    end
-
-    # capture pre-source state when cleanup is enabled
-    set -l pre_vars
-    set -l pre_funcs
-    set -l pre_abbrs
-    set -l pre_paths
-    if __autoreload_cleanup_enabled
         set pre_vars (set --global --names)
         set pre_funcs (functions --all --names)
         set pre_abbrs (abbr --list)
