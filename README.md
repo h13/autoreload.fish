@@ -1,5 +1,7 @@
 # autoreload.fish
 
+[![CI](https://github.com/h13/autoreload.fish/actions/workflows/ci.yml/badge.svg)](https://github.com/h13/autoreload.fish/actions/workflows/ci.yml)
+
 > Auto-reload fish config files when they change.
 
 Fish shell only reads `config.fish` and `conf.d/*.fish` at startup. This [Fisher](https://github.com/jorgebucaran/fisher) plugin watches those files and automatically re-sources any that have been modified, so changes take effect in all open shells without restarting.
@@ -50,6 +52,7 @@ set -g autoreload_debug 1
 ```fish
 autoreload status   # show tracked files and configuration
 autoreload version  # print version number
+autoreload reset    # refresh file tracking snapshot
 ```
 
 ## Debug mode
