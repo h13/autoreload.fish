@@ -112,7 +112,43 @@ set -l output (__autoreload_check)
 @test "quiet mode suppresses sourced message" -z "$output"
 set -e autoreload_quiet
 
-# --- Test 11: _autoreload_uninstall cleans up ---
+# --- Test 11: autoreload reset refreshes snapshot ---
+
+echo "# extra" >$__test_conf_d/extra.fish
+set -l output (autoreload reset)
+@test "reset refreshes snapshot" (string match -q '*snapshot refreshed*' -- $output; and echo yes) = yes
+@test "reset picks up new files" (contains -- $__test_conf_d/extra.fish $__autoreload_files; and echo yes) = yes
+command rm -f $__test_conf_d/extra.fish
+__autoreload_snapshot
+
+# --- Test 12: config.fish creation is detected ---
+
+__autoreload_snapshot
+set -l config_file $__test_dir/config.fish
+command rm -f $config_file
+__autoreload_snapshot
+echo "set -g __test_config_var 99" >$config_file
+set -l output (__autoreload_check)
+@test "config.fish creation is detected" (string match -q '*sourced*config.fish*' -- $output; and echo yes) = yes
+@test "config.fish content is sourced" "$__test_config_var" = 99
+set -e __test_config_var
+
+# --- Test 13: debug mode outputs to stderr ---
+
+__autoreload_snapshot
+set -g autoreload_debug 1
+set -l output (__autoreload_check 2>&1)
+@test "debug mode shows checking message" (string match -q '*debug*checking*' -- $output; and echo yes) = yes
+set -e autoreload_debug
+
+# --- Test 14: status shows flags ---
+
+set -g autoreload_debug 1
+set -l output (autoreload status)
+@test "status shows debug flag" (string match -q '*debug*' -- $output; and echo yes) = yes
+set -e autoreload_debug
+
+# --- Test 15: _autoreload_uninstall cleans up ---
 
 _autoreload_uninstall
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
