@@ -342,7 +342,11 @@ function __autoreload_check --on-event fish_prompt
                         set -a __autoreload_tracked_keys $key
                     end
 
-                    __autoreload_debug "tracking $key: vars="(count $$__autoreload_added_vars_$key)" funcs="(count $$__autoreload_added_funcs_$key)" abbrs="(count $$__autoreload_added_abbrs_$key)" paths="(count $$__autoreload_added_paths_$key)
+                    set -l _vn __autoreload_added_vars_$key
+                    set -l _fn __autoreload_added_funcs_$key
+                    set -l _an __autoreload_added_abbrs_$key
+                    set -l _pn __autoreload_added_paths_$key
+                    __autoreload_debug "tracking $key: vars="(count $$_vn)" funcs="(count $$_fn)" abbrs="(count $$_an)" paths="(count $$_pn)
                 end
             else
                 echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
