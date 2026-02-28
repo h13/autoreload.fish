@@ -6,6 +6,11 @@
 
 Fish shell only reads `config.fish` and `conf.d/*.fish` at startup. This [Fisher](https://github.com/jorgebucaran/fisher) plugin watches those files and automatically re-sources any that have been modified, so changes take effect in all open shells without restarting.
 
+## Requirements
+
+- [Fish shell](https://fishshell.com/) 3.1.0 or later (requires `builtin realpath`)
+- [Fisher](https://github.com/jorgebucaran/fisher) plugin manager
+
 ## Install
 
 ```fish
@@ -53,6 +58,8 @@ set -g autoreload_debug 1
 autoreload status   # show tracked files and configuration
 autoreload version  # print version number
 autoreload reset    # refresh file tracking snapshot
+autoreload enable   # enable file change detection
+autoreload disable  # disable file change detection
 ```
 
 ## Debug mode
