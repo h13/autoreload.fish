@@ -27,12 +27,16 @@ function __autoreload_debug -a msg
     end
 end
 
+function __autoreload_basename
+    string replace -r '.*/' '' $argv
+end
+
 function __autoreload_cleanup_enabled
     set -q autoreload_cleanup; and test "$autoreload_cleanup" = 1
 end
 
 function __autoreload_key -a file
-    string replace -r '.*/' '' $file | string replace -ra '[^a-zA-Z0-9_]' '_'
+    __autoreload_basename $file | string replace -ra '[^a-zA-Z0-9_]' '_'
 end
 
 function __autoreload_clear_tracking -a key
@@ -46,7 +50,7 @@ function __autoreload_clear_tracking -a key
 end
 
 function __autoreload_call_teardown -a file
-    set -l basename (string replace -r '.*/' '' $file)
+    set -l basename (__autoreload_basename $file)
     set -l name (string replace -r '\.fish$' '' $basename)
     set -l teardown_fn __"$name"_teardown
     if functions -q $teardown_fn
@@ -116,7 +120,7 @@ function __autoreload_source_file -a file
     end
 
     if not source $file
-        echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(string replace -r '.*/' '' $file) >&2
+        echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(__autoreload_basename $file) >&2
         if __autoreload_cleanup_enabled
             __autoreload_clear_tracking $key
         end
@@ -199,7 +203,7 @@ function __autoreload_snapshot
         end
         # skip user-excluded files
         if set -q autoreload_exclude
-            set -l basename (string replace -r '.*/' '' $file)
+            set -l basename (__autoreload_basename $file)
             if contains -- $basename $autoreload_exclude
                 __autoreload_debug "excluding: $basename"
                 continue
@@ -235,7 +239,7 @@ function autoreload -a cmd -d "autoreload.fish utility command"
             end
             echo "tracking "(count $__autoreload_files)" files:"
             for file in $__autoreload_files
-                echo "  "(string replace -r '.*/' '' $file)
+                echo "  "(__autoreload_basename $file)
             end
             if __autoreload_cleanup_enabled; and test (count $__autoreload_tracked_keys) -gt 0
                 echo "cleanup tracking "(count $__autoreload_tracked_keys)" files"
@@ -300,14 +304,14 @@ function __autoreload_check --on-event fish_prompt
         end
         set -l current (__autoreload_mtime $file)
         if test "$current" != "$__autoreload_mtimes[$i]"
-            __autoreload_debug "changed: "(string replace -r '.*/' '' $file)
+            __autoreload_debug "changed: "(__autoreload_basename $file)
             set -a changed $file
         end
     end
 
     # handle deleted files: undo side effects and report
     if test (count $deleted) -gt 0
-        __autoreload_debug "deleted: "(string replace -r '.*/' '' $deleted)
+        __autoreload_debug "deleted: "(__autoreload_basename $deleted)
         if __autoreload_cleanup_enabled
             for file in $deleted
                 __autoreload_call_teardown $file
@@ -319,7 +323,7 @@ function __autoreload_check --on-event fish_prompt
             end
         end
         if not __autoreload_is_quiet
-            set -l names (string replace -r '.*/' '' $deleted)
+            set -l names (__autoreload_basename $deleted)
             echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
         end
     end
@@ -337,14 +341,14 @@ function __autoreload_check --on-event fish_prompt
             continue
         end
         if set -q autoreload_exclude
-            set -l basename (string replace -r '.*/' '' $file)
+            set -l basename (__autoreload_basename $file)
             if contains -- $basename $autoreload_exclude
                 __autoreload_debug "excluding: $basename (new)"
                 continue
             end
         end
         if not contains -- $file $__autoreload_files
-            __autoreload_debug "new: "(string replace -r '.*/' '' $file)
+            __autoreload_debug "new: "(__autoreload_basename $file)
             set -a changed $file
         end
     end
@@ -365,7 +369,7 @@ function __autoreload_check --on-event fish_prompt
 
         if test (count $sourced) -gt 0
             if not __autoreload_is_quiet
-                set -l names (string replace -r '.*/' '' $sourced)
+                set -l names (__autoreload_basename $sourced)
                 echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
             end
         end
@@ -390,6 +394,7 @@ function _autoreload_uninstall --on-event autoreload_uninstall
         __autoreload_clear_tracking $key
     end
     functions -e __autoreload_mtime
+    functions -e __autoreload_basename
     functions -e __autoreload_debug
     functions -e __autoreload_cleanup_enabled
     functions -e __autoreload_key
