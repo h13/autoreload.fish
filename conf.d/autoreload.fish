@@ -27,6 +27,24 @@ function __autoreload_debug -a msg
     end
 end
 
+function __autoreload_cleanup_enabled
+    set -q autoreload_cleanup; and test "$autoreload_cleanup" = 1
+end
+
+function __autoreload_key -a file
+    string replace -r '.*/' '' $file | string replace -ra '[^a-zA-Z0-9_]' '_'
+end
+
+function __autoreload_clear_tracking -a key
+    set -e __autoreload_added_vars_$key
+    set -e __autoreload_added_funcs_$key
+    set -e __autoreload_added_abbrs_$key
+    set -e __autoreload_added_paths_$key
+    if set -l idx (contains -i -- $key $__autoreload_tracked_keys)
+        set -e __autoreload_tracked_keys[$idx]
+    end
+end
+
 function __autoreload_is_quiet
     set -q autoreload_quiet; and test "$autoreload_quiet" = 1
 end
@@ -211,6 +229,9 @@ function __autoreload_check --on-event fish_prompt
     __autoreload_snapshot
 end
 
+# initialize tracking state
+set -g __autoreload_tracked_keys
+
 # take initial snapshot
 __autoreload_snapshot
 
@@ -219,8 +240,15 @@ function _autoreload_install --on-event autoreload_install
 end
 
 function _autoreload_uninstall --on-event autoreload_uninstall
+    # clean up per-file tracking variables
+    for key in $__autoreload_tracked_keys
+        __autoreload_clear_tracking $key
+    end
     functions -e __autoreload_mtime
     functions -e __autoreload_debug
+    functions -e __autoreload_cleanup_enabled
+    functions -e __autoreload_key
+    functions -e __autoreload_clear_tracking
     functions -e __autoreload_is_quiet
     functions -e __autoreload_snapshot
     functions -e autoreload
@@ -232,8 +260,10 @@ function _autoreload_uninstall --on-event autoreload_uninstall
     set -e __autoreload_self_glob
     set -e __autoreload_files
     set -e __autoreload_mtimes
+    set -e __autoreload_tracked_keys
     set -e autoreload_enabled
     set -e autoreload_quiet
     set -e autoreload_exclude
     set -e autoreload_debug
+    set -e autoreload_cleanup
 end
