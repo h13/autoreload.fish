@@ -15,6 +15,11 @@ jobs:
           fisher install jorgebucaran/fisher
           fisher install jorgebucaran/fishtape
         shell: fish {0}
+      - name: Syntax check
+        run: |
+          fish --no-execute conf.d/autoreload.fish
+          fish --no-execute completions/autoreload.fish
+        shell: fish {0}
       - uses: fish-shop/run-fishtape-tests@v2
         with:
           patterns: tests/**.fish
