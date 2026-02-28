@@ -31,12 +31,13 @@ The plugin excludes itself from monitoring to prevent recursive sourcing. Fisher
 
 ## Configuration
 
-| Variable              | Default | Description                                    |
-|-----------------------|---------|------------------------------------------------|
-| `autoreload_enabled`  | (unset) | Set to `0` to disable checking                 |
-| `autoreload_quiet`    | (unset) | Set to `1` to suppress sourced/removed messages |
-| `autoreload_exclude`  | (unset) | List of basenames to skip from monitoring       |
-| `autoreload_debug`    | (unset) | Set to `1` to print debug diagnostics           |
+| Variable              | Default | Description                                       |
+|-----------------------|---------|---------------------------------------------------|
+| `autoreload_enabled`  | (unset) | Set to `0` to disable checking                    |
+| `autoreload_quiet`    | (unset) | Set to `1` to suppress sourced/removed messages    |
+| `autoreload_exclude`  | (unset) | List of basenames to skip from monitoring          |
+| `autoreload_debug`    | (unset) | Set to `1` to print debug diagnostics              |
+| `autoreload_cleanup`  | (unset) | Set to `1` to enable state cleanup on re-source    |
 
 ```fish
 # disable autoreload
@@ -50,6 +51,9 @@ set -g autoreload_exclude my_heavy_plugin.fish another.fish
 
 # enable debug output
 set -g autoreload_debug 1
+
+# enable state cleanup — undo previous side effects before re-sourcing
+set -g autoreload_cleanup 1
 ```
 
 ## Commands
@@ -62,6 +66,49 @@ autoreload enable   # enable file change detection
 autoreload disable  # disable file change detection
 autoreload help     # show help message
 ```
+
+## State cleanup
+
+By default, autoreload only re-sources changed files — it does not remove side effects from the previous version. For example, if you remove a `fish_add_path` call from `paths.fish`, the old PATH entry persists until the shell is restarted.
+
+Enable state cleanup to automatically undo previous side effects before re-sourcing:
+
+```fish
+set -U autoreload_cleanup 1
+```
+
+When enabled, autoreload tracks four categories of side effects per file:
+
+| Category       | Tracked via           | Undo method                                       |
+|----------------|-----------------------|---------------------------------------------------|
+| PATH entries   | `$PATH`               | Remove from `$fish_user_paths`, then `$PATH`       |
+| Global vars    | `set --global --names` | `set -eg`                                          |
+| Functions      | `functions --names`    | `functions -e`                                     |
+| Abbreviations  | `abbr --list`          | `abbr --erase`                                     |
+
+On each re-source, the plugin takes a snapshot before and after `source`, computes the diff, and stores the additions. On the next change, it undoes those additions before re-sourcing.
+
+When a tracked file is deleted, its side effects are also cleaned up.
+
+### Teardown hooks
+
+For side effects that cannot be automatically tracked (event handlers, keybindings, modifications to existing variables), define a teardown function in your conf.d file:
+
+```fish
+# In conf.d/aliases.fish
+function __aliases_teardown
+    bind --erase \cg
+end
+```
+
+The function must be named `__<basename_without_extension>_teardown`. It is called before the automatic undo, both on re-source and file deletion.
+
+### Limitations of cleanup
+
+- The first re-source has no baseline — side effects from the initial load are not tracked. Full cleanup starts from the second change onward.
+- Changes to existing variable values are not tracked (only new variables). Use a teardown hook if needed.
+- Event handlers and keybindings are not automatically tracked. Use teardown hooks.
+- Adds ~20ms overhead per changed file (two snapshots + diff). No overhead on unchanged prompts.
 
 ## Debug mode
 

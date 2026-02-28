@@ -5,7 +5,7 @@ if not status is-interactive
     exit
 end
 
-set -g __autoreload_version 1.1.0
+set -g __autoreload_version 1.2.0
 set -g __autoreload_self (builtin realpath (status filename))
 if test -z "$__autoreload_self"
     exit
@@ -136,6 +136,9 @@ function autoreload -a cmd -d "autoreload.fish utility command"
             if set -q autoreload_debug; and test "$autoreload_debug" = 1
                 set -a flags debug
             end
+            if __autoreload_cleanup_enabled
+                set -a flags cleanup
+            end
             if test (count $flags) -gt 0
                 echo "flags: "(string join ", " $flags)
             end
@@ -145,6 +148,9 @@ function autoreload -a cmd -d "autoreload.fish utility command"
             echo "tracking "(count $__autoreload_files)" files:"
             for file in $__autoreload_files
                 echo "  "(string replace -r '.*/' '' $file)
+            end
+            if __autoreload_cleanup_enabled; and test (count $__autoreload_tracked_keys) -gt 0
+                echo "cleanup tracking "(count $__autoreload_tracked_keys)" files"
             end
         case reset
             __autoreload_snapshot
@@ -179,6 +185,7 @@ function autoreload -a cmd -d "autoreload.fish utility command"
             echo "  autoreload_quiet     Set to 1 to suppress messages"
             echo "  autoreload_exclude   List of basenames to skip"
             echo "  autoreload_debug     Set to 1 for debug output"
+            echo "  autoreload_cleanup   Set to 1 to enable state cleanup on re-source"
         case '*'
             echo "autoreload: unknown command '$cmd'" >&2
             echo "Run 'autoreload help' for usage." >&2
