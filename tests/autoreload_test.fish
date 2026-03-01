@@ -246,6 +246,11 @@ set -l output (autoreload enable)
 @test "enable clears autoreload_enabled" (not set -q autoreload_enabled; and echo yes) = yes
 @test "enable shows message" (string match -q '*enabled*' -- $output; and echo yes) = yes
 
+set -U autoreload_enabled 0
+set -l output (autoreload enable)
+@test "enable clears universal autoreload_enabled" (not set -qU autoreload_enabled; and echo yes) = yes
+@test "enable fully enables when universal was set" (not __autoreload_is_disabled; and echo yes) = yes
+
 set -g autoreload_quiet 1
 set -l output (autoreload disable)
 @test "disable quiet produces no output" -z "$output"
