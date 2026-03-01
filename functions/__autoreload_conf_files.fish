@@ -1,7 +1,8 @@
 function __autoreload_conf_files
+    set -g __autoreload_discovered_files
     set -l config_file $__fish_config_dir/config.fish
     if test -f $config_file; and not __autoreload_is_excluded $config_file
-        echo $config_file
+        set -a __autoreload_discovered_files $config_file
     end
     for file in $__fish_config_dir/conf.d/*.fish
         set -l resolved (builtin realpath $file 2>/dev/null)
@@ -12,6 +13,6 @@ function __autoreload_conf_files
             __autoreload_debug "excluding: "(__autoreload_basename $file)
             continue
         end
-        echo $file
+        set -a __autoreload_discovered_files $file
     end
 end
