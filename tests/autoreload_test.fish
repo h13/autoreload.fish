@@ -574,8 +574,12 @@ set -l key (__autoreload_key $__test_conf_d/uninstall_track.fish)
 @test "uninstall tracking: key registered" (contains -- $key $__autoreload_tracked_keys; and echo yes) = yes
 _autoreload_uninstall
 
-# Re-initialize plugin after uninstall
+# Re-initialize plugin after uninstall — explicit source since autoloading
+# may fail for functions that were defined inline then erased.
 set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
+for f in $__test_plugin_functions_dir/__autoreload_*.fish
+    source $f
+end
 __test_init_plugin
 # Re-wrap snapshot for mtime cache invalidation
 functions -c __autoreload_snapshot __test_autoreload_snapshot_impl
