@@ -339,12 +339,12 @@ __autoreload_snapshot
 __autoreload_snapshot
 echo "abbr --add __test_cleanup_abbr 'echo test'" >$__test_conf_d/cleanup_abbr.fish
 set -l output (__autoreload_check)
-@test "cleanup: abbr exists after first source" (abbr --list | string match -q '*__test_cleanup_abbr*'; and echo yes) = yes
+@test "cleanup: abbr exists after first source" (string match -q '*__test_cleanup_abbr*' (abbr --list); and echo yes) = yes
 # re-source without the abbreviation
 echo "# abbr removed" >$__test_conf_d/cleanup_abbr.fish
 command touch -t 200801010000 $__test_conf_d/cleanup_abbr.fish
 set -l output (__autoreload_check)
-@test "cleanup: abbr removed after re-source" (abbr --list | string match -q '*__test_cleanup_abbr*'; or echo gone) = gone
+@test "cleanup: abbr removed after re-source" (string match -q '*__test_cleanup_abbr*' (abbr --list); or echo gone) = gone
 command rm -f $__test_conf_d/cleanup_abbr.fish
 __autoreload_snapshot
 
@@ -491,14 +491,14 @@ set -ga PATH /tmp/__test_undo_path' >$__test_conf_d/undo_direct.fish
 set -l output (__autoreload_check)
 @test "direct undo: var set" "$__test_undo_var" = hello
 @test "direct undo: fn exists" (functions -q __test_undo_fn; and echo yes) = yes
-@test "direct undo: abbr exists" (abbr --list | string match -q '*__test_undo_abbr*'; and echo yes) = yes
+@test "direct undo: abbr exists" (string match -q '*__test_undo_abbr*' (abbr --list); and echo yes) = yes
 @test "direct undo: PATH added" (contains -- /tmp/__test_undo_path $PATH; and echo yes) = yes
 # Call undo directly
 set -l key (__autoreload_key $__test_conf_d/undo_direct.fish)
 __autoreload_undo $key
 @test "direct undo: var removed" (not set -q __test_undo_var; and echo yes) = yes
 @test "direct undo: fn removed" (functions -q __test_undo_fn; or echo gone) = gone
-@test "direct undo: abbr removed" (abbr --list | string match -q '*__test_undo_abbr*'; or echo gone) = gone
+@test "direct undo: abbr removed" (string match -q '*__test_undo_abbr*' (abbr --list); or echo gone) = gone
 @test "direct undo: PATH removed" (not contains -- /tmp/__test_undo_path $PATH; and echo yes) = yes
 command rm -f $__test_conf_d/undo_direct.fish
 __autoreload_snapshot

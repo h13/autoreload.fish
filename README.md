@@ -113,8 +113,8 @@ The function must be named `__<basename_without_extension>_teardown`. It is call
 If a file fails to `source` (e.g., syntax error), the cleanup sequence is:
 
 1. **Undo completes** — previous side effects are already removed before `source` runs.
-2. **Source fails** — a warning is printed and the new side effects are not tracked.
-3. **Next change** — once you fix the file and save, the next prompt re-sources it and tracking resumes normally.
+2. **Source runs** — a warning is printed. Any side effects from the partial source are still tracked for cleanup.
+3. **Next change** — once you fix the file and save, the partial side effects are undone and the file is re-sourced cleanly.
 
 ### Limitations of cleanup
 

@@ -3,7 +3,7 @@ function __autoreload_cleanup_all
         functions -e $fn
     end
     functions -e autoreload
-    for var in (set --global --names | string match '__autoreload_*')
+    for var in (string match '__autoreload_*' (set --global --names))
         set -e $var
     end
     for var in autoreload_enabled autoreload_quiet autoreload_exclude autoreload_debug autoreload_cleanup
