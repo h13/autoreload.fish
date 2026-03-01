@@ -45,10 +45,9 @@ function __autoreload_key -a file
 end
 
 function __autoreload_clear_tracking -a key
-    set -e __autoreload_added_vars_$key
-    set -e __autoreload_added_funcs_$key
-    set -e __autoreload_added_abbrs_$key
-    set -e __autoreload_added_paths_$key
+    for _cat in vars funcs abbrs paths
+        set -e __autoreload_added_{$_cat}_$key
+    end
     if set -l idx (contains -i -- $key $__autoreload_tracked_keys)
         set -e __autoreload_tracked_keys[$idx]
     end
@@ -107,13 +106,17 @@ end
 
 function __autoreload_source_file -a file
     set -l key (__autoreload_key $file)
+    set -l do_cleanup 0
+    if __autoreload_cleanup_enabled
+        set do_cleanup 1
+    end
 
     # undo previous side effects and capture pre-source state
     set -l pre_vars
     set -l pre_funcs
     set -l pre_abbrs
     set -l pre_paths
-    if __autoreload_cleanup_enabled
+    if test $do_cleanup = 1
         __autoreload_call_teardown $file
         if contains -- $key $__autoreload_tracked_keys
             __autoreload_debug "undoing previous state for $key"
@@ -132,64 +135,48 @@ function __autoreload_source_file -a file
     end
 
     # compute diff and save tracking data
-    if __autoreload_cleanup_enabled
+    if test $do_cleanup = 1
         set -l post_vars (set --global --names)
         set -l post_funcs (functions --all --names)
         set -l post_abbrs (abbr --list)
         set -l post_paths $PATH
 
-        # track new variables (exclude __autoreload_* to avoid self-pollution)
-        set -g __autoreload_added_vars_$key
-        for name in $post_vars
-            if string match -q '__autoreload_*' $name
-                continue
+        set -l _has_tracked 0
+        set -l _debug_parts
+        for _cat in vars funcs abbrs paths
+            set -l _pre pre_$_cat
+            set -l _post post_$_cat
+            set -l _track __autoreload_added_{$_cat}_$key
+            set -g $_track
+            for item in $$_post
+                # exclude autoreload internals from vars and funcs tracking
+                if contains -- $_cat vars funcs
+                    if string match -q '__autoreload_*' $item
+                        continue
+                    end
+                end
+                if not contains -- $item $$_pre
+                    set -a $_track $item
+                end
             end
-            if not contains -- $name $pre_vars
-                set -a __autoreload_added_vars_$key $name
-            end
+            set -l _count (count $$_track)
+            set _has_tracked (math $_has_tracked + $_count)
+            set -a _debug_parts "$_cat=$_count"
         end
-
-        # track new functions
-        set -g __autoreload_added_funcs_$key
-        for name in $post_funcs
-            if string match -q '__autoreload_*' $name
-                continue
-            end
-            if not contains -- $name $pre_funcs
-                set -a __autoreload_added_funcs_$key $name
-            end
-        end
-
-        # track new abbreviations
-        set -g __autoreload_added_abbrs_$key
-        for name in $post_abbrs
-            if not contains -- $name $pre_abbrs
-                set -a __autoreload_added_abbrs_$key $name
-            end
-        end
-
-        # track new PATH entries
-        set -g __autoreload_added_paths_$key
-        for p in $post_paths
-            if not contains -- $p $pre_paths
-                set -a __autoreload_added_paths_$key $p
-            end
-        end
-
-        set -l _vn __autoreload_added_vars_$key
-        set -l _fn __autoreload_added_funcs_$key
-        set -l _an __autoreload_added_abbrs_$key
-        set -l _pn __autoreload_added_paths_$key
 
         # register key only when there are tracked items
-        set -l has_tracked (math (count $$_vn) + (count $$_fn) + (count $$_an) + (count $$_pn))
-        if test $has_tracked -gt 0
+        if test $_has_tracked -gt 0
             if not contains -- $key $__autoreload_tracked_keys
                 set -a __autoreload_tracked_keys $key
             end
+        else
+            # clean up empty tracking variables to avoid orphans
+            for _cat in vars funcs abbrs paths
+                set -e __autoreload_added_{$_cat}_$key
+            end
         end
 
-        __autoreload_debug "tracking $key: vars="(count $$_vn)" funcs="(count $$_fn)" abbrs="(count $$_an)" paths="(count $$_pn)
+        __autoreload_debug "tracking $key: "(string join " " $_debug_parts)
     end
 
     return $source_status
