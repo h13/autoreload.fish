@@ -1,7 +1,7 @@
 function __autoreload_show_status
     echo "autoreload v$__autoreload_version"
     set -l flags
-    if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
+    if __autoreload_is_disabled
         set -a flags disabled
     end
     if __autoreload_is_quiet

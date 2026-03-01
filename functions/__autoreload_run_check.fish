@@ -1,5 +1,5 @@
 function __autoreload_run_check
-    if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
+    if __autoreload_is_disabled
         return
     end
     __autoreload_debug "checking "(count $__autoreload_files)" files"
@@ -19,17 +19,32 @@ function __autoreload_run_check
         end
     end
 
-    # Phase 2: batch mtime check (single fork for all files)
-    if set -q _existing[1]
-        set -l _current (__autoreload_mtime $_existing)
-        if test (count $_current) -eq (count $_existing)
-            for i in (seq (count $_existing))
-                if test "$_current[$i]" != "$_saved[$i]"
-                    __autoreload_debug "changed: "(__autoreload_basename $_existing[$i])
-                    set -a _changed $_existing[$i]
-                end
+    # Phase 2: batch mtime check — single fork for tracked files + conf.d directory
+    set -l _conf_d_dir $__fish_config_dir/conf.d
+    set -l _all_mtimes (__autoreload_mtime $_existing $_conf_d_dir)
+    set -l _existing_count (count $_existing)
+    set -l _expected (math $_existing_count + 1)
+    set -l current_conf_d_mtime
+
+    if test (count $_all_mtimes) -eq $_expected
+        for i in (seq $_existing_count)
+            if test "$_all_mtimes[$i]" != "$_saved[$i]"
+                __autoreload_debug "changed: "(__autoreload_basename $_existing[$i])
+                set -a _changed $_existing[$i]
             end
         end
+        set current_conf_d_mtime $_all_mtimes[-1]
+    else
+        # Race condition fallback: file vanished between test -f and stat
+        __autoreload_debug "stat count mismatch, falling back to per-file check"
+        for i in (seq $_existing_count)
+            set -l _mt (__autoreload_mtime $_existing[$i])
+            if test -n "$_mt"; and test "$_mt" != "$_saved[$i]"
+                __autoreload_debug "changed: "(__autoreload_basename $_existing[$i])
+                set -a _changed $_existing[$i]
+            end
+        end
+        set current_conf_d_mtime (__autoreload_mtime $_conf_d_dir)
     end
 
     # detect config.fish creation (not in conf.d, needs separate check)
@@ -40,11 +55,10 @@ function __autoreload_run_check
     end
 
     # detect new files in conf.d only when directory mtime changed
-    set -l current_conf_d_mtime (__autoreload_mtime $__fish_config_dir/conf.d)
     if test "$current_conf_d_mtime" != "$__autoreload_conf_d_mtime"
         set -g __autoreload_conf_d_mtime $current_conf_d_mtime
-        __autoreload_conf_files
-        for file in $__autoreload_discovered_files
+        set -l _discovered (__autoreload_conf_files)
+        for file in $_discovered
             if test "$file" = "$config_file"
                 continue
             end

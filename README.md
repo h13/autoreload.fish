@@ -121,6 +121,7 @@ If a file fails to `source` (e.g., syntax error), the cleanup sequence is:
 - The first re-source has no baseline — side effects from the initial load are not tracked. Full cleanup starts from the second change onward.
 - Changes to existing variable values are not tracked (only new variables). Use a teardown hook if needed.
 - Keybindings are not automatically tracked. Use teardown hooks.
+- `fish_user_paths` is a universal variable shared across all shells. When cleanup removes a PATH entry added via `fish_add_path`, the removal affects all open shells — not just the one where the file changed.
 - Prefer `fish_add_path` over `set -ga PATH` — `fish_add_path` deduplicates automatically, which works better with the cleanup tracker.
 - Adds slight overhead per changed file (state snapshot + diff). No overhead on unchanged prompts.
 
