@@ -125,12 +125,10 @@ function __autoreload_source_file -a file
         set pre_paths $PATH
     end
 
-    if not source $file
+    source $file
+    set -l source_status $status
+    if test $source_status -ne 0
         echo "autoreload: "(set_color red)"error"(set_color normal)" sourcing "(__autoreload_basename $file) >&2
-        if __autoreload_cleanup_enabled
-            __autoreload_clear_tracking $key
-        end
-        return 1
     end
 
     # compute diff and save tracking data
@@ -178,19 +176,23 @@ function __autoreload_source_file -a file
             end
         end
 
-        # register this key
-        if not contains -- $key $__autoreload_tracked_keys
-            set -a __autoreload_tracked_keys $key
-        end
-
         set -l _vn __autoreload_added_vars_$key
         set -l _fn __autoreload_added_funcs_$key
         set -l _an __autoreload_added_abbrs_$key
         set -l _pn __autoreload_added_paths_$key
+
+        # register key only when there are tracked items
+        set -l has_tracked (math (count $$_vn) + (count $$_fn) + (count $$_an) + (count $$_pn))
+        if test $has_tracked -gt 0
+            if not contains -- $key $__autoreload_tracked_keys
+                set -a __autoreload_tracked_keys $key
+            end
+        end
+
         __autoreload_debug "tracking $key: vars="(count $$_vn)" funcs="(count $$_fn)" abbrs="(count $$_an)" paths="(count $$_pn)
     end
 
-    return 0
+    return $source_status
 end
 
 function __autoreload_snapshot
