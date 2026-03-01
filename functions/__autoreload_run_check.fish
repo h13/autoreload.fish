@@ -9,20 +9,28 @@ function __autoreload_run_check
     set -l _changed
     set -l _deleted
 
-    # check tracked files for changes or deletion
+    # Phase 1: separate existing vs deleted files (builtins only, zero forks)
+    set -l _existing
+    set -l _saved
     for i in (seq (count $__autoreload_files))
-        set -l file $__autoreload_files[$i]
-        if not test -f $file
-            set -a _deleted $file
-            continue
+        if test -f $__autoreload_files[$i]
+            set -a _existing $__autoreload_files[$i]
+            set -a _saved $__autoreload_mtimes[$i]
+        else
+            set -a _deleted $__autoreload_files[$i]
         end
-        set -l current (__autoreload_mtime $file)
-        if test -z "$current"
-            continue
-        end
-        if test "$current" != "$__autoreload_mtimes[$i]"
-            __autoreload_debug "changed: "(__autoreload_basename $file)
-            set -a _changed $file
+    end
+
+    # Phase 2: batch mtime check (single fork for all files)
+    if set -q _existing[1]
+        set -l _current (__autoreload_mtime $_existing)
+        if test (count $_current) -eq (count $_existing)
+            for i in (seq (count $_existing))
+                if test "$_current[$i]" != "$_saved[$i]"
+                    __autoreload_debug "changed: "(__autoreload_basename $_existing[$i])
+                    set -a _changed $_existing[$i]
+                end
+            end
         end
     end
 
@@ -49,13 +57,13 @@ function __autoreload_run_check
         end
     end
 
-    if test (count $_deleted) -eq 0; and test (count $_changed) -eq 0
+    if not set -q _deleted[1]; and not set -q _changed[1]
         return
     end
-    if test (count $_deleted) -gt 0
+    if set -q _deleted[1]
         __autoreload_handle_deleted $_deleted
     end
-    if test (count $_changed) -gt 0
+    if set -q _changed[1]
         __autoreload_handle_changed $_changed
     end
     __autoreload_snapshot

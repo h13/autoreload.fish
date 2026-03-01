@@ -9,11 +9,11 @@ function __autoreload_handle_changed
             set -a failed $file
         end
     end
-    if test (count $sourced) -gt 0; and not __autoreload_is_quiet
+    if set -q sourced[1]; and not __autoreload_is_quiet
         set -l names (__autoreload_basename $sourced)
         echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
     end
-    if test (count $failed) -gt 0; and not __autoreload_is_quiet
+    if set -q failed[1]; and not __autoreload_is_quiet
         set -l names (__autoreload_basename $failed)
         echo "autoreload: "(set_color red)"failed"(set_color normal)" $names"
     end
