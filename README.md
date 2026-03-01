@@ -108,6 +108,14 @@ end
 
 The function must be named `__<basename_without_extension>_teardown`. It is called before the automatic undo, both on re-source and file deletion.
 
+### Source failure behavior
+
+If a file fails to `source` (e.g., syntax error), the cleanup sequence is:
+
+1. **Undo completes** — previous side effects are already removed before `source` runs.
+2. **Source fails** — a warning is printed and the new side effects are not tracked.
+3. **Next change** — once you fix the file and save, the next prompt re-sources it and tracking resumes normally.
+
 ### Limitations of cleanup
 
 - The first re-source has no baseline — side effects from the initial load are not tracked. Full cleanup starts from the second change onward.
