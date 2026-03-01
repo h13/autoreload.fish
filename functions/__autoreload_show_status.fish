@@ -23,7 +23,7 @@ function __autoreload_show_status
     for file in $__autoreload_files
         echo "  "(__autoreload_basename $file)
     end
-    if __autoreload_cleanup_enabled; and test (count $__autoreload_tracked_keys) -gt 0
+    if __autoreload_cleanup_enabled; and set -q __autoreload_tracked_keys[1]
         echo "cleanup tracking "(count $__autoreload_tracked_keys)" files:"
         for key in $__autoreload_tracked_keys
             set -l _details
