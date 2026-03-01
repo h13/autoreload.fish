@@ -49,6 +49,15 @@ end
 
 __test_source_plugin
 
+# Wrap __autoreload_snapshot to invalidate conf.d mtime cache for test reliability.
+# Tests execute faster than stat's 1-second mtime resolution, so newly created
+# conf.d files may share the same mtime as the previous snapshot.
+functions -c __autoreload_snapshot __test_autoreload_snapshot_impl
+function __autoreload_snapshot
+    __test_autoreload_snapshot_impl
+    set -g __autoreload_conf_d_mtime 0
+end
+
 # --- Test 1: __autoreload_mtime returns a timestamp ---
 
 set -l test_file $__test_dir/mtime_test.fish
@@ -509,6 +518,7 @@ set -gx fish_function_path $__test_original_fish_function_path
 
 command rm -rf $__test_dir
 functions -e __test_source_plugin
+functions -e __test_autoreload_snapshot_impl
 set -e __test_plugin_file
 set -e __test_dir
 set -e __test_conf_d

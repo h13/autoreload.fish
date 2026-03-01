@@ -8,4 +8,7 @@ function __autoreload_snapshot
             set -a __autoreload_mtimes $mt
         end
     end
+
+    # cache conf.d directory mtime for new-file-scan optimization
+    set -g __autoreload_conf_d_mtime (__autoreload_mtime $__fish_config_dir/conf.d)
 end

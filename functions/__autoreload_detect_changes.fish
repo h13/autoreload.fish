@@ -19,11 +19,24 @@ function __autoreload_detect_changes
         end
     end
 
-    # detect new files (not yet in tracked list)
-    for file in (__autoreload_conf_files)
-        if not contains -- $file $__autoreload_files
-            __autoreload_debug "new: "(__autoreload_basename $file)
-            set -a __autoreload_last_changed $file
+    # detect config.fish creation (not in conf.d, needs separate check)
+    set -l config_file $__fish_config_dir/config.fish
+    if test -f $config_file; and not __autoreload_is_excluded $config_file; and not contains -- $config_file $__autoreload_files
+        __autoreload_debug "new: config.fish"
+        set -a __autoreload_last_changed $config_file
+    end
+
+    # detect new files in conf.d only when directory mtime changed
+    set -l current_conf_d_mtime (__autoreload_mtime $__fish_config_dir/conf.d)
+    if test "$current_conf_d_mtime" != "$__autoreload_conf_d_mtime"
+        for file in (__autoreload_conf_files)
+            if test "$file" = "$config_file"
+                continue
+            end
+            if not contains -- $file $__autoreload_files
+                __autoreload_debug "new: "(__autoreload_basename $file)
+                set -a __autoreload_last_changed $file
+            end
         end
     end
 end
