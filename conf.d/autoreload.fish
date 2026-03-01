@@ -236,7 +236,18 @@ function autoreload -a cmd -d "autoreload.fish utility command"
                 echo "  "(__autoreload_basename $file)
             end
             if __autoreload_cleanup_enabled; and test (count $__autoreload_tracked_keys) -gt 0
-                echo "cleanup tracking "(count $__autoreload_tracked_keys)" files"
+                echo "cleanup tracking "(count $__autoreload_tracked_keys)" files:"
+                for key in $__autoreload_tracked_keys
+                    set -l _details
+                    for _cat in vars funcs abbrs paths
+                        set -l _track __autoreload_added_{$_cat}_$key
+                        set -l _count (count $$_track)
+                        if test $_count -gt 0
+                            set -a _details "$_cat=$_count"
+                        end
+                    end
+                    echo "  $key: "(string join ", " $_details)
+                end
             end
         case reset
             __autoreload_snapshot

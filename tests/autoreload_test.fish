@@ -397,8 +397,16 @@ __autoreload_snapshot
 
 # --- Test 31: autoreload status shows cleanup info ---
 
+# create a file with a variable to ensure tracked keys exist
+__autoreload_snapshot
+echo "set -g __test_status_detail_var 1" >$__test_conf_d/status_detail.fish
+set -l output (__autoreload_check)
 set -l output (autoreload status)
 @test "status shows cleanup flag" (string match -q '*cleanup*' -- $output; and echo yes) = yes
+@test "status shows per-key details" (string match -q '*vars=*' -- $output; and echo yes) = yes
+command rm -f $__test_conf_d/status_detail.fish
+set -e __test_status_detail_var
+__autoreload_snapshot
 
 set -e autoreload_cleanup
 
