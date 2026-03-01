@@ -5,6 +5,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      # Minimum supported version: Fish 3.1+ (requires builtin realpath, string escape --style=var)
+      # CI tests latest 3.x and 4.x from PPA, plus macOS Homebrew
       matrix:
         include:
           - os: ubuntu-latest
