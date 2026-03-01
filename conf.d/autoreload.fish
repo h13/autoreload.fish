@@ -316,7 +316,8 @@ function __autoreload_detect_changes --no-scope-shadowing
 
     # detect new files in conf.d
     for file in $__fish_config_dir/conf.d/*.fish
-        if test "$file" = "$__autoreload_self_glob"
+        set -l resolved (builtin realpath $file 2>/dev/null)
+        if test "$resolved" = "$__autoreload_self"
             continue
         end
         if __autoreload_is_excluded $file
