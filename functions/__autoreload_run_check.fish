@@ -36,6 +36,7 @@ function __autoreload_run_check
     # detect new files in conf.d only when directory mtime changed
     set -l current_conf_d_mtime (__autoreload_mtime $__fish_config_dir/conf.d)
     if test "$current_conf_d_mtime" != "$__autoreload_conf_d_mtime"
+        set -g __autoreload_conf_d_mtime $current_conf_d_mtime
         __autoreload_conf_files
         for file in $__autoreload_discovered_files
             if test "$file" = "$config_file"

@@ -586,6 +586,13 @@ __autoreload_snapshot
 
 set -e autoreload_cleanup
 
+# --- Test 44: conf.d mtime cache updated on no-op directory change ---
+
+set -g __autoreload_conf_d_mtime 0
+set -l output (__autoreload_check)
+@test "conf.d cache: no spurious output on no-op" -z "$output"
+@test "conf.d cache: mtime updated after scan" (test "$__autoreload_conf_d_mtime" != 0; and echo yes) = yes
+
 # --- Test 36: uninstall clears tracking variables ---
 
 set -g autoreload_cleanup 1
