@@ -56,7 +56,7 @@ function autoreload -a cmd -d "autoreload.fish utility command"
             end
         case version
             echo $__autoreload_version
-        case help ''
+        case help '' -h --help
             echo "autoreload v$__autoreload_version — auto-reload fish config files on change"
             echo
             echo "Commands:"

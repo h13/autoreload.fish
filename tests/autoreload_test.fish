@@ -255,6 +255,12 @@ set -l output (autoreload help)
 set -l output (autoreload)
 @test "bare autoreload shows help" (string match -q '*Commands:*' -- $output; and echo yes) = yes
 
+set -l output (autoreload -h)
+@test "-h flag shows help" (string match -q '*Commands:*' -- $output; and echo yes) = yes
+
+set -l output (autoreload --help)
+@test "--help flag shows help" (string match -q '*Commands:*' -- $output; and echo yes) = yes
+
 # --- Test 20: unknown command shows error ---
 
 set -l output (autoreload nonexistent 2>&1)
