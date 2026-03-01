@@ -31,41 +31,13 @@ set -g __test_plugin_file (builtin realpath (status dirname)/../conf.d/autoreloa
 function __test_init_plugin
     eval (string match -r 'set -g __autoreload_version .*' <$__test_plugin_file)
     set -g __autoreload_tracked_keys
-
     function __autoreload_check
-        if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
-            return
-        end
-        __autoreload_debug "checking "(count $__autoreload_files)" files"
-        __autoreload_detect_changes
-        if test (count $__autoreload_last_deleted) -eq 0; and test (count $__autoreload_last_changed) -eq 0
-            return
-        end
-        if test (count $__autoreload_last_deleted) -gt 0
-            __autoreload_handle_deleted $__autoreload_last_deleted
-        end
-        if test (count $__autoreload_last_changed) -gt 0
-            __autoreload_handle_changed $__autoreload_last_changed
-        end
-        __autoreload_snapshot
+        __autoreload_run_check
     end
-
     function _autoreload_uninstall
-        for fn in (functions --all --names | string match '__autoreload_*')
-            functions -e $fn
-        end
-        functions -e autoreload
+        __autoreload_cleanup_all
         functions -e _autoreload_uninstall
-        for var in (set --global --names | string match '__autoreload_*')
-            set -e $var
-        end
-        set -e autoreload_enabled
-        set -e autoreload_quiet
-        set -e autoreload_exclude
-        set -e autoreload_debug
-        set -e autoreload_cleanup
     end
-
     __autoreload_snapshot
     # Invalidate conf.d mtime cache for test reliability.
     # Tests execute faster than stat's 1-second mtime resolution.
