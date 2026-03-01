@@ -83,7 +83,7 @@ command rm -f $del_file
 set -l output (__autoreload_check)
 @test "deleted file is reported" (string match -q '*removed*to_delete.fish*' -- $output; and echo yes) = yes
 
-# --- Test 6: source failure shows error ---
+# --- Test 6: source failure shows warning ---
 
 __autoreload_snapshot
 echo if >$__test_conf_d/broken.fish
@@ -227,6 +227,8 @@ set -l output (autoreload)
 set -l output (autoreload nonexistent 2>&1)
 @test "unknown command shows error" (string match -q '*unknown command*' -- $output; and echo yes) = yes
 @test "unknown command suggests help" (string match -q '*autoreload help*' -- $output; and echo yes) = yes
+autoreload nonexistent 2>/dev/null
+@test "unknown command returns non-zero" $status = 1
 
 # --- Test 21: __autoreload_key generates correct keys ---
 
@@ -336,7 +338,23 @@ set -l output (__autoreload_check)
 @test "delete cleanup: fn removed" (functions -q __test_del_fn; or echo gone) = gone
 __autoreload_snapshot
 
-# --- Test 30: teardown hook called on re-source ---
+# --- Test 30: multiple file deletion — side effects cleaned up ---
+
+__autoreload_snapshot
+echo "set -g __test_mdel_var_a 1" >$__test_conf_d/mdel_a.fish
+echo "set -g __test_mdel_var_b 2" >$__test_conf_d/mdel_b.fish
+set -l output (__autoreload_check)
+@test "multi delete: var a exists" "$__test_mdel_var_a" = 1
+@test "multi delete: var b exists" "$__test_mdel_var_b" = 2
+# delete both files simultaneously
+command rm -f $__test_conf_d/mdel_a.fish $__test_conf_d/mdel_b.fish
+set -l output (__autoreload_check)
+@test "multi delete: var a removed" (not set -q __test_mdel_var_a; and echo yes) = yes
+@test "multi delete: var b removed" (not set -q __test_mdel_var_b; and echo yes) = yes
+@test "multi delete: output lists both" (string match -q '*mdel_a.fish*mdel_b.fish*' -- $output; and echo yes) = yes
+__autoreload_snapshot
+
+# --- Test 31: teardown hook called on re-source ---
 
 # Pre-create marker so it's not tracked as "added" by cleanup
 set -g __test_teardown_marker 0
@@ -355,7 +373,7 @@ command rm -f $__test_conf_d/teardown_hook.fish
 set -e __test_teardown_marker
 __autoreload_snapshot
 
-# --- Test 31: teardown hook called on file deletion ---
+# --- Test 32: teardown hook called on file deletion ---
 
 # Pre-create marker so it's not tracked as "added" by cleanup
 set -g __test_teardown_del_marker initial
@@ -372,7 +390,7 @@ set -l output (__autoreload_check)
 set -e __test_teardown_del_marker
 __autoreload_snapshot
 
-# --- Test 32: first re-source has no baseline — old state remains ---
+# --- Test 33: first re-source has no baseline — old state remains ---
 
 __autoreload_snapshot
 set -g __test_no_baseline_var first
@@ -391,7 +409,7 @@ command rm -f $__test_conf_d/no_baseline.fish
 set -e __test_no_baseline_var
 __autoreload_snapshot
 
-# --- Test 33: source failure clears tracking ---
+# --- Test 34: source failure clears tracking ---
 
 __autoreload_snapshot
 echo "set -g __test_fail_var 1" >$__test_conf_d/fail_track.fish
@@ -408,7 +426,7 @@ command rm -f $__test_conf_d/fail_track.fish
 set -e __test_fail_var
 __autoreload_snapshot
 
-# --- Test 34: autoreload status shows cleanup info ---
+# --- Test 35: autoreload status shows cleanup info ---
 
 # create a file with a variable to ensure tracked keys exist
 __autoreload_snapshot
@@ -423,7 +441,7 @@ __autoreload_snapshot
 
 set -e autoreload_cleanup
 
-# --- Test 35: uninstall clears tracking variables ---
+# --- Test 36: uninstall clears tracking variables ---
 
 set -g autoreload_cleanup 1
 __autoreload_snapshot
@@ -446,7 +464,7 @@ command rm -f $__test_conf_d/uninstall_track.fish
 set -e __test_uninstall_var
 set -e autoreload_cleanup
 
-# --- Test 36: _autoreload_uninstall cleans up ---
+# --- Test 37: _autoreload_uninstall cleans up ---
 
 _autoreload_uninstall
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
