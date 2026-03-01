@@ -447,7 +447,7 @@ command rm -f $__test_conf_d/no_baseline.fish
 set -e __test_no_baseline_var
 __autoreload_snapshot
 
-# --- Test 34: source failure clears tracking ---
+# --- Test 34: source failure preserves tracking ---
 
 __autoreload_snapshot
 echo "set -g __test_fail_var 1" >$__test_conf_d/fail_track.fish
@@ -457,9 +457,9 @@ set -l output (__autoreload_check)
 echo if >$__test_conf_d/fail_track.fish
 command touch -t 201201010000 $__test_conf_d/fail_track.fish
 set -l output (__autoreload_check 2>&1)
-# tracking should be cleared after failure
+# tracking should be preserved after failure (undo is deferred until next successful source)
 set -l key (__autoreload_key $__test_conf_d/fail_track.fish)
-@test "source fail: tracking cleared" (not contains -- $key $__autoreload_tracked_keys; and echo yes) = yes
+@test "source fail: tracking preserved" (contains -- $key $__autoreload_tracked_keys; and echo yes) = yes
 command rm -f $__test_conf_d/fail_track.fish
 set -e __test_fail_var
 __autoreload_snapshot

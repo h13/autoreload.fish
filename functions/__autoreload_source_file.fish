@@ -5,17 +5,13 @@ function __autoreload_source_file -a file
         set do_cleanup 1
     end
 
-    # undo previous side effects and capture pre-source state
+    # capture pre-source state (before source, before undo)
     set -l pre_vars
     set -l pre_funcs
     set -l pre_abbrs
     set -l pre_paths
     if test $do_cleanup = 1
         __autoreload_call_teardown $file
-        if contains -- $key $__autoreload_tracked_keys
-            __autoreload_debug "undoing previous state for $key"
-            __autoreload_undo $key
-        end
         set pre_vars (set --global --names)
         set pre_funcs (functions --all --names)
         set pre_abbrs (abbr --list)
@@ -26,10 +22,17 @@ function __autoreload_source_file -a file
     set -l source_status $status
     if test $source_status -ne 0
         echo "autoreload: "(set_color yellow)"warning"(set_color normal)" sourcing "(__autoreload_basename $file)" exited with status $source_status" >&2
+        return $source_status
     end
 
-    # compute diff and save tracking data
+    # source succeeded — undo old state, then compute new tracking
     if test $do_cleanup = 1
+        if contains -- $key $__autoreload_tracked_keys
+            __autoreload_debug "undoing previous state for $key"
+            __autoreload_undo $key
+        end
+
+        # post-undo snapshot captures only what source added
         set -l post_vars (set --global --names)
         set -l post_funcs (functions --all --names)
         set -l post_abbrs (abbr --list)
@@ -73,5 +76,5 @@ function __autoreload_source_file -a file
         __autoreload_debug "tracking $key: "(string join " " $_debug_parts)
     end
 
-    return $source_status
+    return 0
 end
