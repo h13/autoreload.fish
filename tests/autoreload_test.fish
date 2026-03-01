@@ -130,6 +130,11 @@ set -l output (autoreload status)
 @test "status shows all excludes" (string match -q '*first.fish*second.fish*' -- $output; and echo yes) = yes
 set -e autoreload_exclude
 
+set -g autoreload_exclude
+set -l output (autoreload status)
+@test "status hides excluding when list is empty" (not string match -q '*excluding*' -- $output; and echo yes) = yes
+set -e autoreload_exclude
+
 # --- Test 9: autoreload_exclude skips files ---
 
 set -g autoreload_exclude dummy.fish
@@ -749,6 +754,7 @@ _autoreload_uninstall
 @test "uninstall removes __autoreload_files" (set -q __autoreload_files; or echo gone) = gone
 @test "uninstall removes universal autoreload_cleanup" (set -qU autoreload_cleanup; or echo gone) = gone
 @test "uninstall removes universal autoreload_debug" (set -qU autoreload_debug; or echo gone) = gone
+@test "uninstall removes completions" (complete -c autoreload 2>/dev/null | count) = 0
 
 # --- Cleanup ---
 
