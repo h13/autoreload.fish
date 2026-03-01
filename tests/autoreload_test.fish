@@ -137,6 +137,11 @@ set -l output (autoreload reset)
 command rm -f $__test_conf_d/extra.fish
 __autoreload_snapshot
 
+set -g autoreload_quiet 1
+set -l output (autoreload reset)
+@test "reset quiet mode produces no output" -z "$output"
+set -e autoreload_quiet
+
 # --- Test 12: config.fish creation is detected ---
 
 __autoreload_snapshot
@@ -176,6 +181,11 @@ set -g autoreload_debug 1
 set -l output (autoreload status)
 @test "status shows debug flag" (string match -q '*debug*' -- $output; and echo yes) = yes
 set -e autoreload_debug
+
+set -g autoreload_enabled 0
+set -l output (autoreload status)
+@test "status shows disabled flag" (string match -q '*disabled*' -- $output; and echo yes) = yes
+set -e autoreload_enabled
 
 # --- Test 16: excluded new file is not sourced ---
 
