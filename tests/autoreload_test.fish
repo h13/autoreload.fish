@@ -414,9 +414,10 @@ set -l key (__autoreload_key $__test_conf_d/uninstall_track.fish)
 _autoreload_uninstall
 
 # Re-source production code for final uninstall test
+# Restore __autoreload_self first — uninstall erased it (matches __autoreload_*)
+# and __test_source_plugin disables the self-resolution line
+set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
 __test_source_plugin
-
-set -g __fish_config_dir $__test_dir
 @test "uninstall tracking: tracking var cleaned" (not set -q __autoreload_added_vars_$key; and echo yes) = yes
 @test "uninstall tracking: tracked keys cleared" (test (count $__autoreload_tracked_keys) -eq 0; and echo yes) = yes
 command rm -f $__test_conf_d/uninstall_track.fish
