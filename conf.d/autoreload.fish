@@ -187,7 +187,7 @@ function __autoreload_snapshot
     set -g __autoreload_mtimes
 
     set -l config_file $__fish_config_dir/config.fish
-    if test -f $config_file
+    if test -f $config_file; and not __autoreload_is_excluded $config_file
         set -l mt (__autoreload_mtime $config_file)
         if test -n "$mt"
             set -a __autoreload_files $config_file
@@ -316,7 +316,7 @@ function __autoreload_detect_changes --no-scope-shadowing
 
     # detect config.fish creation
     set -l config_file $__fish_config_dir/config.fish
-    if test -f $config_file; and not contains -- $config_file $__autoreload_files
+    if test -f $config_file; and not __autoreload_is_excluded $config_file; and not contains -- $config_file $__autoreload_files
         __autoreload_debug "new: config.fish"
         set -a changed $config_file
     end
