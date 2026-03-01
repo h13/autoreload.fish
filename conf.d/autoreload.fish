@@ -198,7 +198,6 @@ end
 function __autoreload_snapshot
     set -g __autoreload_files
     set -g __autoreload_mtimes
-    set -g __autoreload_self_glob ""
 
     set -l config_file $__fish_config_dir/config.fish
     if test -f $config_file
@@ -210,7 +209,6 @@ function __autoreload_snapshot
         # exclude self to prevent recursive sourcing
         set -l resolved (builtin realpath $file 2>/dev/null)
         if test "$resolved" = "$__autoreload_self"
-            set __autoreload_self_glob $file
             continue
         end
         # skip user-excluded files
