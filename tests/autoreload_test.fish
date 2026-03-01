@@ -556,7 +556,7 @@ __autoreload_snapshot
 # --- Test 40: empty conf.d returns empty file list ---
 
 for f in $__test_conf_d/*.fish
-    if test (command basename $f) != autoreload.fish
+    if test (string replace -r '.*/' '' $f) != autoreload.fish
         command rm -f $f
     end
 end
@@ -590,16 +590,33 @@ if set -l idx (contains -i -- $__test_dup_path $PATH)
 end
 __autoreload_snapshot
 
+# --- Test 42: cleanup tracks side effects when source exits non-zero ---
+
+__autoreload_snapshot
+echo 'set -g __test_nonzero_var 1
+false' >$__test_conf_d/nonzero_exit.fish
+set -l output (__autoreload_check 2>&1)
+@test "nonzero exit: var is set" "$__test_nonzero_var" = 1
+set -l key (__autoreload_key $__test_conf_d/nonzero_exit.fish)
+@test "nonzero exit: side effects tracked" (contains -- $key $__autoreload_tracked_keys; and echo yes) = yes
+# Re-source without the variable
+echo true >$__test_conf_d/nonzero_exit.fish
+command touch -t 202401010000 $__test_conf_d/nonzero_exit.fish
+set -l output (__autoreload_check)
+@test "nonzero exit: var cleaned up on re-source" (not set -q __test_nonzero_var; and echo yes) = yes
+command rm -f $__test_conf_d/nonzero_exit.fish
+__autoreload_snapshot
+
 set -e autoreload_cleanup
 
-# --- Test 42: conf.d mtime cache updated on no-op directory change ---
+# --- Test 43: conf.d mtime cache updated on no-op directory change ---
 
 set -g __autoreload_conf_d_mtime 0
 set -l output (__autoreload_check)
 @test "conf.d cache: no spurious output on no-op" -z "$output"
 @test "conf.d cache: mtime updated after scan" (test "$__autoreload_conf_d_mtime" != 0; and echo yes) = yes
 
-# --- Test 43: config.fish modification is detected ---
+# --- Test 44: config.fish modification is detected ---
 
 __autoreload_snapshot
 set -l config_file $__test_dir/config.fish
@@ -614,7 +631,7 @@ command rm -f $config_file
 set -e __test_config_mod_var
 __autoreload_snapshot
 
-# --- Test 44: batch stat fallback detects changes ---
+# --- Test 45: batch stat fallback detects changes ---
 
 __autoreload_snapshot
 echo "set -g __test_fallback_var 1" >$__test_conf_d/fallback.fish
@@ -647,7 +664,7 @@ command rm -f $__test_conf_d/fallback.fish
 set -e __test_fallback_var
 __autoreload_snapshot
 
-# --- Test 45: uninstall clears tracking variables ---
+# --- Test 46: uninstall clears tracking variables ---
 
 set -g autoreload_cleanup 1
 __autoreload_snapshot
@@ -679,7 +696,7 @@ command rm -f $__test_conf_d/uninstall_track.fish
 set -e __test_uninstall_var
 set -e autoreload_cleanup
 
-# --- Test 46: _autoreload_uninstall cleans up ---
+# --- Test 47: _autoreload_uninstall cleans up ---
 
 # Pre-load __autoreload_cleanup_all into memory before removing plugin from path
 source $__test_plugin_functions_dir/__autoreload_cleanup_all.fish

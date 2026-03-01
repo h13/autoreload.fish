@@ -27,12 +27,14 @@ function __autoreload_record_diff -a key
                 end
             end
         else
+            # Pre-compute whether to skip autoreload internals (only for vars and funcs)
+            set -l _skip_internal 0
+            if contains -- $_cat vars funcs
+                set _skip_internal 1
+            end
             for item in $$_post
-                # Skip autoreload's own internal state
-                if contains -- $_cat vars funcs
-                    if string match -q '__autoreload_*' $item
-                        continue
-                    end
+                if test $_skip_internal = 1; and string match -q '__autoreload_*' $item
+                    continue
                 end
                 if not contains -- $item $$_pre
                     set -a $_track $item

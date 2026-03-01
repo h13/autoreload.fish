@@ -28,14 +28,15 @@ function __autoreload_source_file -a file
     set -l source_status $status
     if test $source_status -ne 0
         echo "autoreload: "(set_color yellow)"warning"(set_color normal)" sourcing "(__autoreload_basename $file)" exited with status $source_status" >&2
-        __autoreload_clear_pre_state
-        return $source_status
     end
 
-    # source succeeded — compute new tracking
+    # Always compute tracking — even if source returned non-zero.
+    # Fish's source returns the exit status of the LAST command in the file,
+    # not whether sourcing itself succeeded.  Skipping record_diff here would
+    # leave side effects permanently untracked.
     if test $do_cleanup = 1
         __autoreload_record_diff $key
     end
 
-    return 0
+    return $source_status
 end

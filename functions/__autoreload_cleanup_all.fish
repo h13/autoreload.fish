@@ -1,5 +1,5 @@
 function __autoreload_cleanup_all
-    for fn in (functions --all --names | string match '__autoreload_*')
+    for fn in (string match '__autoreload_*' (functions --all --names))
         functions -e $fn
     end
     functions -e autoreload
