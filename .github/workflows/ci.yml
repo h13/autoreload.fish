@@ -40,6 +40,7 @@ jobs:
         run: |
           fish --no-execute conf.d/autoreload.fish
           fish --no-execute completions/autoreload.fish
+          fish --no-execute tests/autoreload_test.fish
         shell: fish {0}
       - name: Format check
         run: fish_indent --check conf.d/autoreload.fish completions/autoreload.fish tests/autoreload_test.fish
