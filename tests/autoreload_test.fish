@@ -110,6 +110,11 @@ set -l output (autoreload status)
 @test "autoreload status lists tracked files" (string match -q '*dummy.fish*' -- $output; and echo yes) = yes
 @test "autoreload version returns version" (autoreload version) = $__autoreload_version
 
+set -g autoreload_exclude dummy.fish
+set -l output (autoreload status)
+@test "status shows excluding list" (string match -q '*excluding:*dummy.fish*' -- $output; and echo yes) = yes
+set -e autoreload_exclude
+
 # --- Test 9: autoreload_exclude skips files ---
 
 set -g autoreload_exclude dummy.fish
@@ -218,10 +223,19 @@ __autoreload_snapshot
 
 # --- Test 18: enable and disable subcommands ---
 
-autoreload disable >/dev/null
+set -l output (autoreload disable)
 @test "disable sets autoreload_enabled to 0" "$autoreload_enabled" = 0
-autoreload enable >/dev/null
+@test "disable shows message" (string match -q '*disabled*' -- $output; and echo yes) = yes
+set -l output (autoreload enable)
 @test "enable clears autoreload_enabled" (not set -q autoreload_enabled; and echo yes) = yes
+@test "enable shows message" (string match -q '*enabled*' -- $output; and echo yes) = yes
+
+set -g autoreload_quiet 1
+set -l output (autoreload disable)
+@test "disable quiet produces no output" -z "$output"
+set -l output (autoreload enable)
+@test "enable quiet produces no output" -z "$output"
+set -e autoreload_quiet
 
 # --- Test 19: help subcommand ---
 
