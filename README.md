@@ -13,7 +13,7 @@ Fish shell only reads `config.fish` and `conf.d/*.fish` at startup. This [Fisher
 
 ## Requirements
 
-- [Fish shell](https://fishshell.com/) 3.1.0 or later (requires `builtin realpath`)
+- [Fish shell](https://fishshell.com/) 3.1.0 or later (requires `builtin realpath`, `string escape --style=var`)
 - [Fisher](https://github.com/jorgebucaran/fisher) plugin manager
 
 ## Install
@@ -146,7 +146,7 @@ This removes all functions and variables via the `autoreload_uninstall` event.
 
 - Detection runs on each prompt — changes are picked up after you press Enter, not in real time.
 - Only monitors `config.fish` and `conf.d/*.fish`. Files sourced indirectly (e.g., from `functions/`) are not tracked.
-- If a sourced file has a syntax error, an error message is printed but the file is skipped.
+- If a sourced file has a syntax error, a warning is printed and the file is reported as failed.
 
 ## Compatibility
 
