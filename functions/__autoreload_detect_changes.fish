@@ -19,23 +19,8 @@ function __autoreload_detect_changes
         end
     end
 
-    # detect config.fish creation
-    set -l config_file $__fish_config_dir/config.fish
-    if test -f $config_file; and not __autoreload_is_excluded $config_file; and not contains -- $config_file $__autoreload_files
-        __autoreload_debug "new: config.fish"
-        set -a __autoreload_last_changed $config_file
-    end
-
-    # detect new files in conf.d
-    for file in $__fish_config_dir/conf.d/*.fish
-        set -l resolved (builtin realpath $file 2>/dev/null)
-        if test "$resolved" = "$__autoreload_self"
-            continue
-        end
-        if __autoreload_is_excluded $file
-            __autoreload_debug "excluding: "(__autoreload_basename $file)" (new)"
-            continue
-        end
+    # detect new files (not yet in tracked list)
+    for file in (__autoreload_conf_files)
         if not contains -- $file $__autoreload_files
             __autoreload_debug "new: "(__autoreload_basename $file)
             set -a __autoreload_last_changed $file
