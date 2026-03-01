@@ -18,40 +18,63 @@ echo "# self" >$__test_conf_d/autoreload.fish
 # Save original __fish_config_dir for restoration in cleanup
 set -g __test_original_fish_config_dir $__fish_config_dir
 
-# Override __fish_config_dir and pre-set __autoreload_self before sourcing
+# Override __fish_config_dir and pre-set __autoreload_self
 set -g __fish_config_dir $__test_dir
 set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
 
-# Source production code with test-incompatible parts neutralized:
-# - Disable interactive guard (tests run non-interactively)
-# - Preserve pre-set __autoreload_self instead of resolving from status filename
-# - Disable empty-self guard (we already set it)
-# - Remove --on-event so __autoreload_check can be called directly
+# Extract version from production conf.d
 set -g __test_plugin_file (builtin realpath (status dirname)/../conf.d/autoreload.fish)
 
-function __test_source_plugin
-    # verify replacement targets exist in production code
-    for pattern in 'if not status is-interactive' \
-        'set -g __autoreload_self (builtin realpath (status filename))' \
-        'if test -z "$__autoreload_self"' \
-        '--on-event fish_prompt'
-        if not string match -q "*$pattern*" <$__test_plugin_file
-            echo "test_source_plugin: pattern not found: $pattern" >&2
-            return 1
+# Initialize plugin state directly — no string replacement of production code.
+# Event-bound functions (__autoreload_check, _autoreload_uninstall) are defined
+# here without --on-event so they can be called directly from tests.
+function __test_init_plugin
+    eval (string match -r 'set -g __autoreload_version .*' <$__test_plugin_file)
+    set -g __autoreload_tracked_keys
+
+    function __autoreload_check
+        if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
+            return
         end
+        __autoreload_debug "checking "(count $__autoreload_files)" files"
+        __autoreload_detect_changes
+        if test (count $__autoreload_last_deleted) -eq 0; and test (count $__autoreload_last_changed) -eq 0
+            return
+        end
+        if test (count $__autoreload_last_deleted) -gt 0
+            __autoreload_handle_deleted $__autoreload_last_deleted
+        end
+        if test (count $__autoreload_last_changed) -gt 0
+            __autoreload_handle_changed $__autoreload_last_changed
+        end
+        __autoreload_snapshot
     end
-    string replace 'if not status is-interactive' 'if false' <$__test_plugin_file \
-        | string replace 'set -g __autoreload_self (builtin realpath (status filename))' '# __autoreload_self already set by test' \
-        | string replace 'if test -z "$__autoreload_self"' 'if false' \
-        | string replace -- '--on-event fish_prompt' '' \
-        | source
+
+    function _autoreload_uninstall
+        for fn in (functions --all --names | string match '__autoreload_*')
+            functions -e $fn
+        end
+        functions -e autoreload
+        functions -e _autoreload_uninstall
+        for var in (set --global --names | string match '__autoreload_*')
+            set -e $var
+        end
+        set -e autoreload_enabled
+        set -e autoreload_quiet
+        set -e autoreload_exclude
+        set -e autoreload_debug
+        set -e autoreload_cleanup
+    end
+
+    __autoreload_snapshot
+    # Invalidate conf.d mtime cache for test reliability.
+    # Tests execute faster than stat's 1-second mtime resolution.
+    set -g __autoreload_conf_d_mtime 0
 end
 
-__test_source_plugin
+__test_init_plugin
 
-# Wrap __autoreload_snapshot to invalidate conf.d mtime cache for test reliability.
-# Tests execute faster than stat's 1-second mtime resolution, so newly created
-# conf.d files may share the same mtime as the previous snapshot.
+# Wrap __autoreload_snapshot to invalidate conf.d mtime cache after every call
 functions -c __autoreload_snapshot __test_autoreload_snapshot_impl
 function __autoreload_snapshot
     __test_autoreload_snapshot_impl
@@ -490,11 +513,15 @@ set -l key (__autoreload_key $__test_conf_d/uninstall_track.fish)
 @test "uninstall tracking: key registered" (contains -- $key $__autoreload_tracked_keys; and echo yes) = yes
 _autoreload_uninstall
 
-# Re-source production code for final uninstall test
-# Restore __autoreload_self first — uninstall erased it (matches __autoreload_*)
-# and __test_source_plugin disables the self-resolution line
+# Re-initialize plugin after uninstall
 set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
-__test_source_plugin
+__test_init_plugin
+# Re-wrap snapshot for mtime cache invalidation
+functions -c __autoreload_snapshot __test_autoreload_snapshot_impl
+function __autoreload_snapshot
+    __test_autoreload_snapshot_impl
+    set -g __autoreload_conf_d_mtime 0
+end
 @test "re-source after uninstall succeeded" (functions -q __autoreload_check; and echo yes) = yes
 @test "uninstall tracking: tracking var cleaned" (not set -q __autoreload_added_vars_$key; and echo yes) = yes
 @test "uninstall tracking: tracked keys cleared" (test (count $__autoreload_tracked_keys) -eq 0; and echo yes) = yes
@@ -517,7 +544,7 @@ set -gx fish_function_path $__test_original_fish_function_path
 # --- Cleanup ---
 
 command rm -rf $__test_dir
-functions -e __test_source_plugin
+functions -e __test_init_plugin
 functions -e __test_autoreload_snapshot_impl
 set -e __test_plugin_file
 set -e __test_dir
