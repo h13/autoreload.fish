@@ -630,6 +630,9 @@ set -e autoreload_cleanup
 source $__test_plugin_functions_dir/__autoreload_cleanup_all.fish
 # Remove plugin functions/ BEFORE uninstall so autoload cannot re-discover erased functions
 set -gx fish_function_path $__test_original_fish_function_path
+# Set universal config vars to verify cleanup erases both scopes
+set -U autoreload_cleanup 1
+set -U autoreload_debug 1
 _autoreload_uninstall
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
 @test "uninstall removes __autoreload_snapshot" (functions -q __autoreload_snapshot; or echo gone) = gone
@@ -637,6 +640,8 @@ _autoreload_uninstall
 @test "uninstall removes __autoreload_check" (functions -q __autoreload_check; or echo gone) = gone
 @test "uninstall removes __autoreload_version" (set -q __autoreload_version; or echo gone) = gone
 @test "uninstall removes __autoreload_files" (set -q __autoreload_files; or echo gone) = gone
+@test "uninstall removes universal autoreload_cleanup" (set -qU autoreload_cleanup; or echo gone) = gone
+@test "uninstall removes universal autoreload_debug" (set -qU autoreload_debug; or echo gone) = gone
 
 # --- Cleanup ---
 
@@ -652,3 +657,6 @@ set -e __test_original_fish_config_dir
 set -gx fish_function_path $__test_original_fish_function_path
 set -e __test_original_fish_function_path
 set -e __test_plugin_functions_dir
+# Safety net: clean up any universal vars that might persist if tests fail
+set -eU autoreload_cleanup
+set -eU autoreload_debug
