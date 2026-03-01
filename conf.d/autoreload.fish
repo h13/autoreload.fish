@@ -188,8 +188,11 @@ function __autoreload_snapshot
 
     set -l config_file $__fish_config_dir/config.fish
     if test -f $config_file
-        set -a __autoreload_files $config_file
-        set -a __autoreload_mtimes (__autoreload_mtime $config_file)
+        set -l mt (__autoreload_mtime $config_file)
+        if test -n "$mt"
+            set -a __autoreload_files $config_file
+            set -a __autoreload_mtimes $mt
+        end
     end
 
     for file in $__fish_config_dir/conf.d/*.fish
@@ -203,8 +206,11 @@ function __autoreload_snapshot
             __autoreload_debug "excluding: "(__autoreload_basename $file)
             continue
         end
-        set -a __autoreload_files $file
-        set -a __autoreload_mtimes (__autoreload_mtime $file)
+        set -l mt (__autoreload_mtime $file)
+        if test -n "$mt"
+            set -a __autoreload_files $file
+            set -a __autoreload_mtimes $mt
+        end
     end
 end
 
