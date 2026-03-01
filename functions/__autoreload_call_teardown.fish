@@ -5,5 +5,8 @@ function __autoreload_call_teardown -a file
     if functions -q $teardown_fn
         __autoreload_debug "calling $teardown_fn"
         $teardown_fn
+        if test $status -ne 0
+            __autoreload_debug "$teardown_fn failed with status $status"
+        end
     end
 end
