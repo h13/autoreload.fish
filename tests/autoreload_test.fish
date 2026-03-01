@@ -439,6 +439,7 @@ _autoreload_uninstall
 # and __test_source_plugin disables the self-resolution line
 set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
 __test_source_plugin
+@test "re-source after uninstall succeeded" (functions -q __autoreload_check; and echo yes) = yes
 @test "uninstall tracking: tracking var cleaned" (not set -q __autoreload_added_vars_$key; and echo yes) = yes
 @test "uninstall tracking: tracked keys cleared" (test (count $__autoreload_tracked_keys) -eq 0; and echo yes) = yes
 command rm -f $__test_conf_d/uninstall_track.fish
