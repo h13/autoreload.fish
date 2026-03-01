@@ -2,9 +2,7 @@ function __autoreload_run_check
     if set -q autoreload_enabled; and test "$autoreload_enabled" = 0
         return
     end
-    if __autoreload_is_debug
-        __autoreload_debug "checking "(count $__autoreload_files)" files"
-    end
+    __autoreload_debug "checking "(count $__autoreload_files)" files"
 
     set -l _changed
     set -l _deleted

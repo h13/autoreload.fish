@@ -480,7 +480,7 @@ __autoreload_snapshot
 
 set -e autoreload_cleanup
 
-# --- Test 38: direct undo restores vars, funcs, abbrs, PATH ---
+# --- Test 36: direct undo restores vars, funcs, abbrs, PATH ---
 
 set -g autoreload_cleanup 1
 __autoreload_snapshot
@@ -503,7 +503,7 @@ __autoreload_undo $key
 command rm -f $__test_conf_d/undo_direct.fish
 __autoreload_snapshot
 
-# --- Test 39: simultaneous file change and deletion ---
+# --- Test 37: simultaneous file change and deletion ---
 
 __autoreload_snapshot
 echo "set -g __test_simul_change_var 1" >$__test_conf_d/simul_change.fish
@@ -521,7 +521,7 @@ command rm -f $__test_conf_d/simul_change.fish
 set -e __test_simul_change_var
 __autoreload_snapshot
 
-# --- Test 40: source failure recovery on re-source ---
+# --- Test 38: source failure recovery on re-source ---
 
 __autoreload_snapshot
 echo "set -g __test_recover_var 1" >$__test_conf_d/recover.fish
@@ -539,7 +539,7 @@ command rm -f $__test_conf_d/recover.fish
 set -e __test_recover_var
 __autoreload_snapshot
 
-# --- Test 41: teardown failure logged in debug mode ---
+# --- Test 39: teardown failure logged in debug mode ---
 
 __autoreload_snapshot
 echo 'function __teardown_fail_teardown; return 1; end' >$__test_conf_d/teardown_fail.fish
@@ -553,7 +553,7 @@ set -e autoreload_debug
 command rm -f $__test_conf_d/teardown_fail.fish
 __autoreload_snapshot
 
-# --- Test 42: empty conf.d returns empty file list ---
+# --- Test 40: empty conf.d returns empty file list ---
 
 for f in $__test_conf_d/*.fish
     if test (command basename $f) != autoreload.fish
@@ -567,7 +567,7 @@ __autoreload_snapshot
 echo "# dummy" >$__test_conf_d/dummy.fish
 __autoreload_snapshot
 
-# --- Test 43: PATH duplicate not accumulated on re-source ---
+# --- Test 41: PATH duplicate not accumulated on re-source ---
 
 __autoreload_snapshot
 set -l __test_dup_path /tmp/__test_dup_path_entry
@@ -592,14 +592,14 @@ __autoreload_snapshot
 
 set -e autoreload_cleanup
 
-# --- Test 44: conf.d mtime cache updated on no-op directory change ---
+# --- Test 42: conf.d mtime cache updated on no-op directory change ---
 
 set -g __autoreload_conf_d_mtime 0
 set -l output (__autoreload_check)
 @test "conf.d cache: no spurious output on no-op" -z "$output"
 @test "conf.d cache: mtime updated after scan" (test "$__autoreload_conf_d_mtime" != 0; and echo yes) = yes
 
-# --- Test 36: uninstall clears tracking variables ---
+# --- Test 43: uninstall clears tracking variables ---
 
 set -g autoreload_cleanup 1
 __autoreload_snapshot
@@ -631,7 +631,7 @@ command rm -f $__test_conf_d/uninstall_track.fish
 set -e __test_uninstall_var
 set -e autoreload_cleanup
 
-# --- Test 37: _autoreload_uninstall cleans up ---
+# --- Test 44: _autoreload_uninstall cleans up ---
 
 # Pre-load __autoreload_cleanup_all into memory before removing plugin from path
 source $__test_plugin_functions_dir/__autoreload_cleanup_all.fish

@@ -1,9 +1,6 @@
 function __autoreload_source_file -a file
     # Defensive cleanup of pre-state from interrupted previous runs
-    set -e __autoreload_pre_vars
-    set -e __autoreload_pre_funcs
-    set -e __autoreload_pre_abbrs
-    set -e __autoreload_pre_paths
+    __autoreload_clear_pre_state
 
     set -l key (__autoreload_key $file)
     set -l do_cleanup 0
@@ -31,10 +28,7 @@ function __autoreload_source_file -a file
     set -l source_status $status
     if test $source_status -ne 0
         echo "autoreload: "(set_color yellow)"warning"(set_color normal)" sourcing "(__autoreload_basename $file)" exited with status $source_status" >&2
-        set -e __autoreload_pre_vars
-        set -e __autoreload_pre_funcs
-        set -e __autoreload_pre_abbrs
-        set -e __autoreload_pre_paths
+        __autoreload_clear_pre_state
         return $source_status
     end
 

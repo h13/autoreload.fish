@@ -5,7 +5,13 @@ if not status is-interactive
     exit
 end
 
-set -g __autoreload_version 1.8.0
+# Require Fish 3.1+ (builtin realpath, string escape --style=var)
+if not builtin -q realpath
+    echo "autoreload.fish requires Fish 3.1+" >&2
+    exit
+end
+
+set -g __autoreload_version 1.9.0
 set -g __autoreload_self (builtin realpath (status filename))
 if test -z "$__autoreload_self"
     exit
