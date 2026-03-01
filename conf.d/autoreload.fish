@@ -41,7 +41,7 @@ function __autoreload_cleanup_enabled
 end
 
 function __autoreload_key -a file
-    __autoreload_basename $file | string replace -ra '[^a-zA-Z0-9_]' _
+    __autoreload_basename $file | string escape --style=var
 end
 
 function __autoreload_clear_tracking -a key

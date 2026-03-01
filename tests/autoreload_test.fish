@@ -203,9 +203,10 @@ set -l output (autoreload nonexistent 2>&1)
 
 # --- Test 20: __autoreload_key generates correct keys ---
 
-@test "key: aliases.fish -> aliases_fish" (__autoreload_key /some/path/aliases.fish) = aliases_fish
-@test "key: my-plugin.fish -> my_plugin_fish" (__autoreload_key /path/my-plugin.fish) = my_plugin_fish
-@test "key: a.b.fish -> a_b_fish" (__autoreload_key /path/a.b.fish) = a_b_fish
+@test "key: aliases.fish -> aliases_2E_fish" (__autoreload_key /some/path/aliases.fish) = aliases_2E_fish
+@test "key: my-plugin.fish -> my_2D_plugin_2E_fish" (__autoreload_key /path/my-plugin.fish) = my_2D_plugin_2E_fish
+@test "key: a.b.fish -> a_2E_b_2E_fish" (__autoreload_key /path/a.b.fish) = a_2E_b_2E_fish
+@test "key: no collision: my-plugin.fish != my_plugin.fish" (test (__autoreload_key /path/my-plugin.fish) != (__autoreload_key /path/my_plugin.fish); and echo yes) = yes
 
 # --- Test 20b: __autoreload_basename ---
 
