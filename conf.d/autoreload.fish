@@ -252,7 +252,7 @@ function autoreload -a cmd -d "autoreload.fish utility command"
                             set -a _details "$_cat=$_count"
                         end
                     end
-                    echo "  $key: "(string join ", " $_details)
+                    echo "  "(string unescape --style=var $key)": "(string join ", " $_details)
                 end
             end
         case reset
