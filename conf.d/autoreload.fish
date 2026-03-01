@@ -5,7 +5,7 @@ if not status is-interactive
     exit
 end
 
-set -g __autoreload_version 1.2.2
+set -g __autoreload_version 1.2.3
 set -g __autoreload_self (builtin realpath (status filename))
 if test -z "$__autoreload_self"
     exit
