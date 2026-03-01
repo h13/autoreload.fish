@@ -474,6 +474,95 @@ __autoreload_snapshot
 
 set -e autoreload_cleanup
 
+# --- Test 38: direct undo restores vars, funcs, abbrs, PATH ---
+
+set -g autoreload_cleanup 1
+__autoreload_snapshot
+echo 'set -g __test_undo_var hello
+function __test_undo_fn; echo x; end
+abbr --add __test_undo_abbr "echo undo"
+set -ga PATH /tmp/__test_undo_path' >$__test_conf_d/undo_direct.fish
+set -l output (__autoreload_check)
+@test "direct undo: var set" "$__test_undo_var" = hello
+@test "direct undo: fn exists" (functions -q __test_undo_fn; and echo yes) = yes
+@test "direct undo: abbr exists" (abbr --list | string match -q '*__test_undo_abbr*'; and echo yes) = yes
+@test "direct undo: PATH added" (contains -- /tmp/__test_undo_path $PATH; and echo yes) = yes
+# Call undo directly
+set -l key (__autoreload_key $__test_conf_d/undo_direct.fish)
+__autoreload_undo $key
+@test "direct undo: var removed" (not set -q __test_undo_var; and echo yes) = yes
+@test "direct undo: fn removed" (functions -q __test_undo_fn; or echo gone) = gone
+@test "direct undo: abbr removed" (abbr --list | string match -q '*__test_undo_abbr*'; or echo gone) = gone
+@test "direct undo: PATH removed" (not contains -- /tmp/__test_undo_path $PATH; and echo yes) = yes
+command rm -f $__test_conf_d/undo_direct.fish
+__autoreload_snapshot
+
+# --- Test 39: simultaneous file change and deletion ---
+
+__autoreload_snapshot
+echo "set -g __test_simul_change_var 1" >$__test_conf_d/simul_change.fish
+echo "set -g __test_simul_delete_var 1" >$__test_conf_d/simul_delete.fish
+__autoreload_snapshot
+echo "set -g __test_simul_change_var 2" >$__test_conf_d/simul_change.fish
+command touch -t 201701010000 $__test_conf_d/simul_change.fish
+command rm -f $__test_conf_d/simul_delete.fish
+set -l output (__autoreload_check)
+@test "simultaneous: changed file sourced" "$__test_simul_change_var" = 2
+@test "simultaneous: deleted file reported" (string match -q '*removed*simul_delete.fish*' -- $output; and echo yes) = yes
+@test "simultaneous: changed file reported" (string match -q '*sourced*simul_change.fish*' -- $output; and echo yes) = yes
+@test "simultaneous: deleted var cleaned up" (not set -q __test_simul_delete_var; and echo yes) = yes
+command rm -f $__test_conf_d/simul_change.fish
+set -e __test_simul_change_var
+__autoreload_snapshot
+
+# --- Test 40: source failure recovery on re-source ---
+
+__autoreload_snapshot
+echo "set -g __test_recover_var 1" >$__test_conf_d/recover.fish
+set -l output (__autoreload_check)
+@test "recovery: initial source works" "$__test_recover_var" = 1
+echo if >$__test_conf_d/recover.fish
+command touch -t 201801010000 $__test_conf_d/recover.fish
+set -l output (__autoreload_check 2>&1)
+@test "recovery: broken file warned" (string match -q '*warning*recover.fish*' -- $output; and echo yes) = yes
+echo "set -g __test_recover_var fixed" >$__test_conf_d/recover.fish
+command touch -t 201901010000 $__test_conf_d/recover.fish
+set -l output (__autoreload_check)
+@test "recovery: fixed file re-sourced" "$__test_recover_var" = fixed
+command rm -f $__test_conf_d/recover.fish
+set -e __test_recover_var
+__autoreload_snapshot
+
+# --- Test 41: teardown failure logged in debug mode ---
+
+__autoreload_snapshot
+echo 'function __teardown_fail_teardown; return 1; end' >$__test_conf_d/teardown_fail.fish
+set -l output (__autoreload_check)
+set -g autoreload_debug 1
+echo "# modified" >$__test_conf_d/teardown_fail.fish
+command touch -t 202001010000 $__test_conf_d/teardown_fail.fish
+set -l output (__autoreload_check 2>&1)
+@test "teardown fail: failure logged" (string match -q '*failed with status*' -- $output; and echo yes) = yes
+set -e autoreload_debug
+command rm -f $__test_conf_d/teardown_fail.fish
+__autoreload_snapshot
+
+# --- Test 42: empty conf.d returns empty file list ---
+
+for f in $__test_conf_d/*.fish
+    if test (command basename $f) != autoreload.fish
+        command rm -f $f
+    end
+end
+command rm -f $__test_dir/config.fish
+__autoreload_snapshot
+@test "empty conf.d: no files tracked" (count $__autoreload_files) = 0
+# Restore files for remaining tests
+echo "# dummy" >$__test_conf_d/dummy.fish
+__autoreload_snapshot
+
+set -e autoreload_cleanup
+
 # --- Test 36: uninstall clears tracking variables ---
 
 set -g autoreload_cleanup 1
