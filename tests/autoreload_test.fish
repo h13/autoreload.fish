@@ -22,6 +22,16 @@ set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
 set -g __test_plugin_file (builtin realpath (status dirname)/../conf.d/autoreload.fish)
 
 function __test_source_plugin
+    # verify replacement targets exist in production code
+    for pattern in 'if not status is-interactive' \
+            'set -g __autoreload_self (builtin realpath (status filename))' \
+            'if test -z "$__autoreload_self"' \
+            '--on-event fish_prompt'
+        if not string match -q "*$pattern*" <$__test_plugin_file
+            echo "test_source_plugin: pattern not found: $pattern" >&2
+            return 1
+        end
+    end
     string replace 'if not status is-interactive' 'if false' <$__test_plugin_file \
         | string replace 'set -g __autoreload_self (builtin realpath (status filename))' '# __autoreload_self already set by test' \
         | string replace 'if test -z "$__autoreload_self"' 'if false' \
