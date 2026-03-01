@@ -7,6 +7,11 @@ set -g __test_dir (mktemp -d)
 set -g __test_conf_d $__test_dir/conf.d
 mkdir -p $__test_conf_d
 
+# Add plugin functions/ to fish_function_path so autoloaded functions are available
+set -g __test_plugin_functions_dir (builtin realpath (status dirname)/../functions)
+set -g __test_original_fish_function_path $fish_function_path
+set -gx fish_function_path $__test_plugin_functions_dir $fish_function_path
+
 # Create a dummy self file so the plugin can resolve its own path
 echo "# self" >$__test_conf_d/autoreload.fish
 
@@ -491,6 +496,8 @@ set -e autoreload_cleanup
 # --- Test 37: _autoreload_uninstall cleans up ---
 
 _autoreload_uninstall
+# Remove plugin functions/ from fish_function_path so autoload cannot re-discover erased functions
+set -gx fish_function_path $__test_original_fish_function_path
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
 @test "uninstall removes __autoreload_snapshot" (functions -q __autoreload_snapshot; or echo gone) = gone
 @test "uninstall removes __autoreload_source_file" (functions -q __autoreload_source_file; or echo gone) = gone
@@ -508,3 +515,6 @@ set -e __test_conf_d
 set -e __test_new_file_var
 set -g __fish_config_dir $__test_original_fish_config_dir
 set -e __test_original_fish_config_dir
+set -gx fish_function_path $__test_original_fish_function_path
+set -e __test_original_fish_function_path
+set -e __test_plugin_functions_dir
