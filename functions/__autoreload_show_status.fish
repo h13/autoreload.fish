@@ -17,7 +17,7 @@ function __autoreload_show_status
         echo "flags: "(string join ", " $flags)
     end
     if set -q autoreload_exclude
-        echo "excluding: $autoreload_exclude"
+        echo "excluding:" $autoreload_exclude
     end
     echo "tracking "(count $__autoreload_files)" files:"
     for file in $__autoreload_files

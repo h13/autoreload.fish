@@ -13,6 +13,6 @@ function __autoreload_handle_deleted
     end
     if not __autoreload_is_quiet
         set -l names (__autoreload_basename $deleted)
-        echo "autoreload: "(set_color yellow)"removed"(set_color normal)" $names"
+        echo "autoreload: "(set_color yellow)"removed"(set_color normal) $names
     end
 end

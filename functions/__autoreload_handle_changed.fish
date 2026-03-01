@@ -11,10 +11,10 @@ function __autoreload_handle_changed
     end
     if set -q sourced[1]; and not __autoreload_is_quiet
         set -l names (__autoreload_basename $sourced)
-        echo "autoreload: "(set_color green)"sourced"(set_color normal)" $names"
+        echo "autoreload: "(set_color green)"sourced"(set_color normal) $names
     end
     if set -q failed[1]; and not __autoreload_is_quiet
         set -l names (__autoreload_basename $failed)
-        echo "autoreload: "(set_color red)"failed"(set_color normal)" $names"
+        echo "autoreload: "(set_color red)"failed"(set_color normal) $names
     end
 end

@@ -124,6 +124,12 @@ set -l output (autoreload status)
 @test "status shows excluding list" (string match -q '*excluding:*dummy.fish*' -- $output; and echo yes) = yes
 set -e autoreload_exclude
 
+set -g autoreload_exclude first.fish second.fish
+set -l output (autoreload status)
+@test "status shows multiple excludes on one line" (count (string match -ra 'excluding' -- $output)) = 1
+@test "status shows all excludes" (string match -q '*first.fish*second.fish*' -- $output; and echo yes) = yes
+set -e autoreload_exclude
+
 # --- Test 9: autoreload_exclude skips files ---
 
 set -g autoreload_exclude dummy.fish
@@ -225,6 +231,7 @@ set -l output (__autoreload_check)
 @test "multiple changed files: a is sourced" "$__test_multi_a" = 10
 @test "multiple changed files: b is sourced" "$__test_multi_b" = 20
 @test "multiple changed files: output lists both" (string match -q '*multi_a.fish*multi_b.fish*' -- $output; and echo yes) = yes
+@test "multiple changed files: single sourced prefix" (count (string match -ra 'sourced' -- $output)) = 1
 command rm -f $__test_conf_d/multi_a.fish $__test_conf_d/multi_b.fish
 set -e __test_multi_a
 set -e __test_multi_b
@@ -391,6 +398,7 @@ set -l output (__autoreload_check)
 @test "multi delete: var a removed" (not set -q __test_mdel_var_a; and echo yes) = yes
 @test "multi delete: var b removed" (not set -q __test_mdel_var_b; and echo yes) = yes
 @test "multi delete: output lists both" (string match -q '*mdel_a.fish*mdel_b.fish*' -- $output; and echo yes) = yes
+@test "multi delete: single removed prefix" (count (string match -ra 'removed' -- $output)) = 1
 __autoreload_snapshot
 
 # --- Test 31: teardown hook called on re-source ---
