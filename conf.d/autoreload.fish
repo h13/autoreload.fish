@@ -25,20 +25,18 @@ function __autoreload_check --on-event fish_prompt
 
     __autoreload_debug "checking "(count $__autoreload_files)" files"
 
-    set -l changed
-    set -l deleted
     __autoreload_detect_changes
 
-    if test (count $deleted) -eq 0; and test (count $changed) -eq 0
+    if test (count $__autoreload_last_deleted) -eq 0; and test (count $__autoreload_last_changed) -eq 0
         return
     end
 
-    if test (count $deleted) -gt 0
-        __autoreload_handle_deleted $deleted
+    if test (count $__autoreload_last_deleted) -gt 0
+        __autoreload_handle_deleted $__autoreload_last_deleted
     end
 
-    if test (count $changed) -gt 0
-        __autoreload_handle_changed $changed
+    if test (count $__autoreload_last_changed) -gt 0
+        __autoreload_handle_changed $__autoreload_last_changed
     end
 
     __autoreload_snapshot
