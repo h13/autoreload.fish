@@ -412,10 +412,6 @@ __autoreload_snapshot
 
 # Fisher lifecycle events
 function _autoreload_uninstall --on-event autoreload_uninstall
-    # clean up per-file tracking variables
-    for key in $__autoreload_tracked_keys
-        __autoreload_clear_tracking $key
-    end
     # remove all __autoreload_* functions dynamically
     for fn in (functions --all --names | string match '__autoreload_*')
         functions -e $fn
