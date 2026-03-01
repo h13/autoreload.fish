@@ -5,17 +5,20 @@ function __autoreload_source_file -a file
         set do_cleanup 1
     end
 
-    # capture pre-source state (before source, before undo)
-    set -l pre_vars
-    set -l pre_funcs
-    set -l pre_abbrs
-    set -l pre_paths
     if test $do_cleanup = 1
         __autoreload_call_teardown $file
-        set pre_vars (set --global --names)
-        set pre_funcs (functions --all --names)
-        set pre_abbrs (abbr --list)
-        set pre_paths $PATH
+
+        # undo previous tracked state BEFORE source
+        if contains -- $key $__autoreload_tracked_keys
+            __autoreload_debug "undoing previous state for $key"
+            __autoreload_undo $key
+        end
+
+        # pre-source snapshot on clean state
+        set -l pre_vars (set --global --names)
+        set -l pre_funcs (functions --all --names)
+        set -l pre_abbrs (abbr --list)
+        set -l pre_paths $PATH
     end
 
     source $file
@@ -25,14 +28,8 @@ function __autoreload_source_file -a file
         return $source_status
     end
 
-    # source succeeded — undo old state, then compute new tracking
+    # source succeeded — compute new tracking
     if test $do_cleanup = 1
-        if contains -- $key $__autoreload_tracked_keys
-            __autoreload_debug "undoing previous state for $key"
-            __autoreload_undo $key
-        end
-
-        # post-undo snapshot captures only what source added
         set -l post_vars (set --global --names)
         set -l post_funcs (functions --all --names)
         set -l post_abbrs (abbr --list)
@@ -46,7 +43,6 @@ function __autoreload_source_file -a file
             set -l _track __autoreload_added_{$_cat}_$key
             set -g $_track
             for item in $$_post
-                # exclude autoreload internals from vars and funcs tracking
                 if contains -- $_cat vars funcs
                     if string match -q '__autoreload_*' $item
                         continue
@@ -61,13 +57,11 @@ function __autoreload_source_file -a file
             set -a _debug_parts "$_cat=$_count"
         end
 
-        # register key only when there are tracked items
         if test $_has_tracked -gt 0
             if not contains -- $key $__autoreload_tracked_keys
                 set -a __autoreload_tracked_keys $key
             end
         else
-            # clean up empty tracking variables to avoid orphans
             for _cat in vars funcs abbrs paths
                 set -e __autoreload_added_{$_cat}_$key
             end
