@@ -561,6 +561,29 @@ __autoreload_snapshot
 echo "# dummy" >$__test_conf_d/dummy.fish
 __autoreload_snapshot
 
+# --- Test 43: PATH duplicate not accumulated on re-source ---
+
+__autoreload_snapshot
+set -l __test_dup_path /tmp/__test_dup_path_entry
+set -ga PATH $__test_dup_path
+echo "set -ga PATH $__test_dup_path" >$__test_conf_d/dup_path.fish
+set -l output (__autoreload_check)
+# The conf.d file adds a duplicate PATH entry; cleanup should track it
+set -l key (__autoreload_key $__test_conf_d/dup_path.fish)
+set -l _paths_var __autoreload_added_paths_$key
+@test "dup PATH: duplicate is tracked" (count $$_paths_var) = 1
+# Re-source without the PATH append — undo should remove the duplicate
+echo "# path removed" >$__test_conf_d/dup_path.fish
+command touch -t 202101010000 $__test_conf_d/dup_path.fish
+set -l output (__autoreload_check)
+@test "dup PATH: duplicate removed after re-source" (count (string match -- $__test_dup_path $PATH)) = 1
+# Clean up
+command rm -f $__test_conf_d/dup_path.fish
+if set -l idx (contains -i -- $__test_dup_path $PATH)
+    set -e PATH[$idx]
+end
+__autoreload_snapshot
+
 set -e autoreload_cleanup
 
 # --- Test 36: uninstall clears tracking variables ---

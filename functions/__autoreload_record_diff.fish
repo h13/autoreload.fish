@@ -11,14 +11,26 @@ function __autoreload_record_diff -a key
         set -l _post post_$_cat
         set -l _track __autoreload_added_{$_cat}_$key
         set -g $_track
-        for item in $$_post
-            if contains -- $_cat vars funcs
-                if string match -q '__autoreload_*' $item
-                    continue
+        if test $_cat = paths
+            # Count-based diff for PATH to detect duplicate entries
+            set -l _remaining $$_pre
+            for item in $$_post
+                if set -l idx (contains -i -- $item $_remaining)
+                    set -e _remaining[$idx]
+                else
+                    set -a $_track $item
                 end
             end
-            if not contains -- $item $$_pre
-                set -a $_track $item
+        else
+            for item in $$_post
+                if contains -- $_cat vars funcs
+                    if string match -q '__autoreload_*' $item
+                        continue
+                    end
+                end
+                if not contains -- $item $$_pre
+                    set -a $_track $item
+                end
             end
         end
         set -l _count (count $$_track)
