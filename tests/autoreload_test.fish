@@ -503,9 +503,11 @@ set -e autoreload_cleanup
 
 # --- Test 37: _autoreload_uninstall cleans up ---
 
-_autoreload_uninstall
-# Remove plugin functions/ from fish_function_path so autoload cannot re-discover erased functions
+# Pre-load __autoreload_cleanup_all into memory before removing plugin from path
+source $__test_plugin_functions_dir/__autoreload_cleanup_all.fish
+# Remove plugin functions/ BEFORE uninstall so autoload cannot re-discover erased functions
 set -gx fish_function_path $__test_original_fish_function_path
+_autoreload_uninstall
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
 @test "uninstall removes __autoreload_snapshot" (functions -q __autoreload_snapshot; or echo gone) = gone
 @test "uninstall removes __autoreload_source_file" (functions -q __autoreload_source_file; or echo gone) = gone
