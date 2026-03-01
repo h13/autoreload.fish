@@ -399,9 +399,6 @@ set -g __autoreload_tracked_keys
 __autoreload_snapshot
 
 # Fisher lifecycle events
-function _autoreload_install --on-event autoreload_install
-end
-
 function _autoreload_uninstall --on-event autoreload_uninstall
     # clean up per-file tracking variables
     for key in $__autoreload_tracked_keys
@@ -412,7 +409,6 @@ function _autoreload_uninstall --on-event autoreload_uninstall
         functions -e $fn
     end
     functions -e autoreload
-    functions -e _autoreload_install
     functions -e _autoreload_uninstall
     # remove all __autoreload_* variables dynamically
     for var in (set --global --names | string match '__autoreload_*')
