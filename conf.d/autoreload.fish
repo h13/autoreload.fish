@@ -340,7 +340,7 @@ end
 
 function __autoreload_handle_deleted
     set -l deleted $argv
-    __autoreload_debug "deleted: "(__autoreload_basename $deleted)
+    __autoreload_debug "deleted: "(string join " " (__autoreload_basename $deleted))
     if __autoreload_cleanup_enabled
         for file in $deleted
             __autoreload_call_teardown $file
