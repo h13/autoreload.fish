@@ -11,7 +11,7 @@ if not builtin -q realpath
     exit
 end
 
-set -g __autoreload_version 1.15.0
+set -g __autoreload_version 1.16.0
 set -g __autoreload_self (builtin realpath (status filename))
 if test -z "$__autoreload_self"
     exit

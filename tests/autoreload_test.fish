@@ -564,7 +564,7 @@ __autoreload_snapshot
 # --- Test 40: empty conf.d returns empty file list ---
 
 for f in $__test_conf_d/*.fish
-    if test (string replace -r '.*/' '' $f) != autoreload.fish
+    if test (__autoreload_basename $f) != autoreload.fish
         command rm -f $f
     end
 end
@@ -708,7 +708,7 @@ _autoreload_uninstall
 # Re-initialize plugin after uninstall — explicit source since autoloading
 # may fail for functions that were defined inline then erased.
 set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
-for f in $__test_plugin_functions_dir/__autoreload_*.fish
+for f in $__test_plugin_functions_dir/*.fish
     source $f
 end
 __test_init_plugin
@@ -721,7 +721,7 @@ function __autoreload_snapshot
 end
 @test "re-source after uninstall succeeded" (functions -q __autoreload_check; and echo yes) = yes
 @test "uninstall tracking: tracking var cleaned" (not set -q __autoreload_added_vars_$key; and echo yes) = yes
-@test "uninstall tracking: tracked keys cleared" (test (count $__autoreload_tracked_keys) -eq 0; and echo yes) = yes
+@test "uninstall tracking: tracked keys cleared" (not set -q __autoreload_tracked_keys[1]; and echo yes) = yes
 command rm -f $__test_conf_d/uninstall_track.fish
 set -e __test_uninstall_var
 set -e autoreload_cleanup
