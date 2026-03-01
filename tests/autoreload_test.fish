@@ -612,6 +612,7 @@ for f in $__test_plugin_functions_dir/__autoreload_*.fish
 end
 __test_init_plugin
 # Re-wrap snapshot for mtime cache invalidation
+functions -e __test_autoreload_snapshot_impl
 functions -c __autoreload_snapshot __test_autoreload_snapshot_impl
 function __autoreload_snapshot
     __test_autoreload_snapshot_impl
