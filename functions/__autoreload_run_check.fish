@@ -29,6 +29,9 @@ function __autoreload_run_check
     if test (count $_all_mtimes) -eq $_expected
         for i in (seq $_existing_count)
             if test "$_all_mtimes[$i]" != "$_saved[$i]"
+                if __autoreload_is_excluded $_existing[$i]
+                    continue
+                end
                 __autoreload_debug "changed: "(__autoreload_basename $_existing[$i])
                 set -a _changed $_existing[$i]
             end
@@ -40,6 +43,9 @@ function __autoreload_run_check
         for i in (seq $_existing_count)
             set -l _mt (__autoreload_mtime $_existing[$i])
             if test -n "$_mt"; and test "$_mt" != "$_saved[$i]"
+                if __autoreload_is_excluded $_existing[$i]
+                    continue
+                end
                 __autoreload_debug "changed: "(__autoreload_basename $_existing[$i])
                 set -a _changed $_existing[$i]
             end

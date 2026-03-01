@@ -13,7 +13,7 @@ function __autoreload_show_status
     if __autoreload_cleanup_enabled
         set -a flags cleanup
     end
-    if test (count $flags) -gt 0
+    if set -q flags[1]
         echo "flags: "(string join ", " $flags)
     end
     if set -q autoreload_exclude
