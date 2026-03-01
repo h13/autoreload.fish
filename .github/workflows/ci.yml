@@ -40,10 +40,13 @@ jobs:
         run: |
           fish --no-execute conf.d/autoreload.fish
           fish --no-execute completions/autoreload.fish
+          for f in functions/*.fish
+              fish --no-execute $f
+          end
           fish --no-execute tests/autoreload_test.fish
         shell: fish {0}
       - name: Format check
-        run: fish_indent --check conf.d/autoreload.fish completions/autoreload.fish tests/autoreload_test.fish
+        run: fish_indent --check conf.d/autoreload.fish completions/autoreload.fish functions/*.fish tests/autoreload_test.fish
         shell: fish {0}
       - uses: fish-shop/run-fishtape-tests@v2
         with:
