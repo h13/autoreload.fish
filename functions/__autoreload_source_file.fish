@@ -3,12 +3,8 @@ function __autoreload_source_file -a file
     __autoreload_clear_pre_state
 
     set -l key (__autoreload_key $file)
-    set -l do_cleanup 0
-    if __autoreload_cleanup_enabled
-        set do_cleanup 1
-    end
 
-    if test $do_cleanup = 1
+    if __autoreload_cleanup_enabled
         __autoreload_call_teardown $file
 
         # undo previous tracked state BEFORE source
@@ -34,7 +30,7 @@ function __autoreload_source_file -a file
     # Fish's source returns the exit status of the LAST command in the file,
     # not whether sourcing itself succeeded.  Skipping record_diff here would
     # leave side effects permanently untracked.
-    if test $do_cleanup = 1
+    if __autoreload_cleanup_enabled
         __autoreload_record_diff $key
     end
 
