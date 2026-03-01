@@ -301,6 +301,9 @@ function __autoreload_detect_changes --no-scope-shadowing
             continue
         end
         set -l current (__autoreload_mtime $file)
+        if test -z "$current"
+            continue
+        end
         if test "$current" != "$__autoreload_mtimes[$i]"
             __autoreload_debug "changed: "(__autoreload_basename $file)
             set -a changed $file
