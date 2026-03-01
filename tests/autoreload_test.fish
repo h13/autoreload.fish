@@ -88,7 +88,8 @@ set -l output (__autoreload_check)
 __autoreload_snapshot
 echo if >$__test_conf_d/broken.fish
 set -l output (__autoreload_check 2>&1)
-@test "source failure shows error message" (string match -q '*error*broken.fish*' -- $output; and echo yes) = yes
+@test "source failure shows warning on stderr" (string match -q '*warning*broken.fish*' -- $output; and echo yes) = yes
+@test "source failure shows failed on stdout" (string match -q '*failed*broken.fish*' -- $output; and echo yes) = yes
 command rm -f $__test_conf_d/broken.fish
 __autoreload_snapshot
 
