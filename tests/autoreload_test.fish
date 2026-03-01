@@ -222,13 +222,13 @@ set -l output (autoreload nonexistent 2>&1)
 @test "key: a.b.fish -> a_2E_b_2E_fish" (__autoreload_key /path/a.b.fish) = a_2E_b_2E_fish
 @test "key: no collision: my-plugin.fish != my_plugin.fish" (test (__autoreload_key /path/my-plugin.fish) != (__autoreload_key /path/my_plugin.fish); and echo yes) = yes
 
-# --- Test 20b: __autoreload_basename ---
+# --- Test 21: __autoreload_basename ---
 
 @test "basename: extracts filename" (__autoreload_basename /some/path/foo.fish) = foo.fish
 @test "basename: bare filename unchanged" (__autoreload_basename bar.fish) = bar.fish
 @test "basename: multiple args" (count (__autoreload_basename /a/one.fish /b/two.fish)) = 2
 
-# --- Test 20c: __autoreload_is_excluded ---
+# --- Test 22: __autoreload_is_excluded ---
 
 set -g autoreload_exclude skip.fish
 @test "is_excluded: matching file returns 0" (__autoreload_is_excluded /path/skip.fish; and echo yes) = yes
@@ -236,7 +236,7 @@ set -g autoreload_exclude skip.fish
 set -e autoreload_exclude
 @test "is_excluded: unset exclude returns 1" (not __autoreload_is_excluded /path/any.fish; and echo yes) = yes
 
-# --- Test 21: cleanup disabled (default) — current behavior unchanged ---
+# --- Test 23: cleanup disabled (default) — current behavior unchanged ---
 
 __autoreload_snapshot
 echo "set -g __test_cleanup_disabled_var 1" >$__test_conf_d/cleanup_off.fish
@@ -251,7 +251,7 @@ command rm -f $__test_conf_d/cleanup_off.fish
 set -e __test_cleanup_disabled_var
 __autoreload_snapshot
 
-# --- Test 22: cleanup enabled — variable removed on re-source ---
+# --- Test 24: cleanup enabled — variable removed on re-source ---
 
 set -g autoreload_cleanup 1
 __autoreload_snapshot
@@ -266,7 +266,7 @@ set -l output (__autoreload_check)
 command rm -f $__test_conf_d/cleanup_var.fish
 __autoreload_snapshot
 
-# --- Test 23: cleanup enabled — function removed on re-source ---
+# --- Test 25: cleanup enabled — function removed on re-source ---
 
 __autoreload_snapshot
 echo "function __test_cleanup_fn; echo hi; end" >$__test_conf_d/cleanup_fn.fish
@@ -280,7 +280,7 @@ set -l output (__autoreload_check)
 command rm -f $__test_conf_d/cleanup_fn.fish
 __autoreload_snapshot
 
-# --- Test 24: cleanup enabled — abbreviation removed on re-source ---
+# --- Test 26: cleanup enabled — abbreviation removed on re-source ---
 
 __autoreload_snapshot
 echo "abbr --add __test_cleanup_abbr 'echo test'" >$__test_conf_d/cleanup_abbr.fish
@@ -294,7 +294,7 @@ set -l output (__autoreload_check)
 command rm -f $__test_conf_d/cleanup_abbr.fish
 __autoreload_snapshot
 
-# --- Test 25: cleanup enabled — PATH entry removed on re-source ---
+# --- Test 27: cleanup enabled — PATH entry removed on re-source ---
 
 __autoreload_snapshot
 echo "set -ga PATH /tmp/__test_cleanup_path_entry" >$__test_conf_d/cleanup_path.fish
@@ -308,7 +308,7 @@ set -l output (__autoreload_check)
 command rm -f $__test_conf_d/cleanup_path.fish
 __autoreload_snapshot
 
-# --- Test 26: file deletion — side effects cleaned up ---
+# --- Test 28: file deletion — side effects cleaned up ---
 
 __autoreload_snapshot
 echo "set -g __test_del_var 1
@@ -323,7 +323,7 @@ set -l output (__autoreload_check)
 @test "delete cleanup: fn removed" (functions -q __test_del_fn; or echo gone) = gone
 __autoreload_snapshot
 
-# --- Test 27: teardown hook called on re-source ---
+# --- Test 29: teardown hook called on re-source ---
 
 # Pre-create marker so it's not tracked as "added" by cleanup
 set -g __test_teardown_marker 0
@@ -342,7 +342,7 @@ command rm -f $__test_conf_d/teardown_hook.fish
 set -e __test_teardown_marker
 __autoreload_snapshot
 
-# --- Test 28: teardown hook called on file deletion ---
+# --- Test 30: teardown hook called on file deletion ---
 
 # Pre-create marker so it's not tracked as "added" by cleanup
 set -g __test_teardown_del_marker initial
@@ -359,7 +359,7 @@ set -l output (__autoreload_check)
 set -e __test_teardown_del_marker
 __autoreload_snapshot
 
-# --- Test 29: first re-source has no baseline — old state remains ---
+# --- Test 31: first re-source has no baseline — old state remains ---
 
 __autoreload_snapshot
 set -g __test_no_baseline_var first
@@ -378,7 +378,7 @@ command rm -f $__test_conf_d/no_baseline.fish
 set -e __test_no_baseline_var
 __autoreload_snapshot
 
-# --- Test 30: source failure clears tracking ---
+# --- Test 32: source failure clears tracking ---
 
 __autoreload_snapshot
 echo "set -g __test_fail_var 1" >$__test_conf_d/fail_track.fish
@@ -395,7 +395,7 @@ command rm -f $__test_conf_d/fail_track.fish
 set -e __test_fail_var
 __autoreload_snapshot
 
-# --- Test 31: autoreload status shows cleanup info ---
+# --- Test 33: autoreload status shows cleanup info ---
 
 # create a file with a variable to ensure tracked keys exist
 __autoreload_snapshot
@@ -410,7 +410,7 @@ __autoreload_snapshot
 
 set -e autoreload_cleanup
 
-# --- Test 32: uninstall clears tracking variables ---
+# --- Test 34: uninstall clears tracking variables ---
 
 set -g autoreload_cleanup 1
 __autoreload_snapshot
@@ -432,7 +432,7 @@ command rm -f $__test_conf_d/uninstall_track.fish
 set -e __test_uninstall_var
 set -e autoreload_cleanup
 
-# --- Test 33: _autoreload_uninstall cleans up ---
+# --- Test 35: _autoreload_uninstall cleans up ---
 
 _autoreload_uninstall
 @test "uninstall removes __autoreload_mtime" (functions -q __autoreload_mtime; or echo gone) = gone
