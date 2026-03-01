@@ -1,4 +1,10 @@
 function __autoreload_source_file -a file
+    # Defensive cleanup of pre-state from interrupted previous runs
+    set -e __autoreload_pre_vars
+    set -e __autoreload_pre_funcs
+    set -e __autoreload_pre_abbrs
+    set -e __autoreload_pre_paths
+
     set -l key (__autoreload_key $file)
     set -l do_cleanup 0
     if __autoreload_cleanup_enabled
