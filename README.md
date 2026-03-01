@@ -97,7 +97,7 @@ When a tracked file is deleted, its side effects are also cleaned up.
 
 ### Teardown hooks
 
-For side effects that cannot be automatically tracked (event handlers, keybindings, modifications to existing variables), define a teardown function in your conf.d file:
+For side effects that cannot be automatically tracked (keybindings, modifications to existing variables), define a teardown function in your conf.d file:
 
 ```fish
 # In conf.d/aliases.fish
@@ -112,7 +112,7 @@ The function must be named `__<basename_without_extension>_teardown`. It is call
 
 - The first re-source has no baseline — side effects from the initial load are not tracked. Full cleanup starts from the second change onward.
 - Changes to existing variable values are not tracked (only new variables). Use a teardown hook if needed.
-- Event handlers and keybindings are not automatically tracked. Use teardown hooks.
+- Keybindings are not automatically tracked. Use teardown hooks.
 - Adds ~20ms overhead per changed file (two snapshots + diff). No overhead on unchanged prompts.
 
 ## Debug mode
