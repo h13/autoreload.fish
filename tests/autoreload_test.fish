@@ -10,6 +10,9 @@ mkdir -p $__test_conf_d
 # Create a dummy self file so the plugin can resolve its own path
 echo "# self" >$__test_conf_d/autoreload.fish
 
+# Save original __fish_config_dir for restoration in cleanup
+set -g __test_original_fish_config_dir $__fish_config_dir
+
 # Override __fish_config_dir and pre-set __autoreload_self before sourcing
 set -g __fish_config_dir $__test_dir
 set -g __autoreload_self (builtin realpath $__test_conf_d/autoreload.fish)
@@ -24,9 +27,9 @@ set -g __test_plugin_file (builtin realpath (status dirname)/../conf.d/autoreloa
 function __test_source_plugin
     # verify replacement targets exist in production code
     for pattern in 'if not status is-interactive' \
-            'set -g __autoreload_self (builtin realpath (status filename))' \
-            'if test -z "$__autoreload_self"' \
-            '--on-event fish_prompt'
+        'set -g __autoreload_self (builtin realpath (status filename))' \
+        'if test -z "$__autoreload_self"' \
+        '--on-event fish_prompt'
         if not string match -q "*$pattern*" <$__test_plugin_file
             echo "test_source_plugin: pattern not found: $pattern" >&2
             return 1
@@ -437,3 +440,5 @@ set -e __test_plugin_file
 set -e __test_dir
 set -e __test_conf_d
 set -e __test_new_file_var
+set -g __fish_config_dir $__test_original_fish_config_dir
+set -e __test_original_fish_config_dir
