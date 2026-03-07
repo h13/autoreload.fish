@@ -15,7 +15,7 @@ jobs:
             fish-ppa: release-4
           - os: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Install fish shell (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -48,6 +48,6 @@ jobs:
       - name: Format check
         run: fish_indent --check conf.d/autoreload.fish completions/autoreload.fish functions/*.fish tests/autoreload_test.fish
         shell: fish {0}
-      - uses: fish-shop/run-fishtape-tests@v2
+      - uses: fish-shop/run-fishtape-tests@ff7cd603f8eaecf4d44c6ff696430608de0c3bf1 # v2
         with:
           patterns: tests/**.fish
