@@ -48,6 +48,6 @@ jobs:
       - name: Format check
         run: fish_indent --check conf.d/autoreload.fish completions/autoreload.fish functions/*.fish tests/autoreload_test.fish
         shell: fish {0}
-      - uses: fish-shop/run-fishtape-tests@e21e92ca567f1bf2cd7f8e51a7fb8a29bd73c1b8 # v2.3.117
+      - uses: fish-shop/run-fishtape-tests@612f8bdbec21e252526d69a6aad1e585c79f832f # v2.3.118
         with:
           patterns: tests/**.fish
