@@ -9,7 +9,8 @@ jobs:
       # CI tests latest 3.x and 4.x from PPA, plus macOS Homebrew
       matrix:
         include:
-          - os: ubuntu-latest
+          # ppa:fish-shell/release-3 has no build for Ubuntu 26.04 (ubuntu-latest)
+          - os: ubuntu-24.04
             fish-ppa: release-3
           - os: ubuntu-latest
             fish-ppa: release-4
