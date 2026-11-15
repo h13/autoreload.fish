@@ -9,7 +9,8 @@ jobs:
       # CI tests latest 3.x and 4.x from PPA, plus macOS Homebrew
       matrix:
         include:
-          - os: ubuntu-latest
+          # ppa:fish-shell/release-3 has no build for Ubuntu 26.04 (ubuntu-latest)
+          - os: ubuntu-24.04
             fish-ppa: release-3
           - os: ubuntu-latest
             fish-ppa: release-4
@@ -48,6 +49,6 @@ jobs:
       - name: Format check
         run: fish_indent --check conf.d/autoreload.fish completions/autoreload.fish functions/*.fish tests/autoreload_test.fish
         shell: fish {0}
-      - uses: fish-shop/run-fishtape-tests@03313270052a47ed8255aa038c821a92ac29c18d # v2.3.124
+      - uses: fish-shop/run-fishtape-tests@9415136a0e3486347ce6dd8fb982d37db1ed070d # v2.3.128
         with:
           patterns: tests/**.fish
